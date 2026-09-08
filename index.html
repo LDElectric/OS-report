@@ -2,545 +2,441 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ordem de Serviço - Fotos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Ordem de Serviço</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#FFBF00">
+    <meta name="theme-color" content="#1b1b1b">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="OS Fotos">
     <link rel="apple-touch-icon" href="icon.png">
     <style>
-        /* ===== RESET E ESTILOS GERAIS ===== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --amarelo: #FFBF00;
+            --amarelo-escuro: #e0a800;
+            --escuro: #1b1b1b;
+            --cinza-fundo: #eef0f3;
+            --branco: #ffffff;
+            --texto: #1c1c1c;
+            --texto-suave: #6b7280;
+            --borda: #e4e7ec;
+            --perigo: #e5484d;
+            --raio: 16px;
         }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        html, body { height: 100%; }
 
         body {
-            background: #e6e6e6;
+            font-family: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+            background: var(--cinza-fundo);
+            color: var(--texto);
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+        }
+
+        /* ===== APP BAR (topo) ===== */
+        .appbar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: var(--escuro);
+            color: #fff;
+            padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
+            display: flex;
             align-items: center;
-            min-height: 100vh;
-            font-family: Arial, Helvetica, sans-serif;
-            padding: 20px;
-        }
-
-        .a4-page {
-            width: 210mm;
-            min-height: 297mm;
-            background: #ffffff;
-            padding: 15mm 18mm;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            border-radius: 4px;
-            display: flex;
-            flex-direction: column;
             gap: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,.18);
         }
-
-        /* ===== CABEÇALHO ===== */
-        .titulo-os {
-            font-size: 24px;
-            font-weight: bold;
-            color: #000000;
-            text-align: center;
-            letter-spacing: 2px;
-            padding-bottom: 8px;
-            border-bottom: 3px solid #FFBF00;
-            margin-bottom: 8px;
+        .appbar .logo {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            object-fit: cover;
+            box-shadow: 0 2px 6px rgba(0,0,0,.3);
         }
-
-        /* ===== CAMPOS ===== */
-        .campos-linha {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px 20px;
-            margin-bottom: 6px;
+        .appbar .ident {
+            display: flex; flex-direction: column; line-height: 1.15; min-width: 0;
         }
+        .appbar .ident .nome { font-weight: 700; font-size: 17px; letter-spacing: .3px; }
+        .appbar .ident .subtitulo { font-size: 12px; color: #cfcfcf; }
 
-        .campo {
+        .appbar .btn-instalar {
+            margin-left: auto;
+            background: var(--amarelo);
+            color: #000;
+            border: none;
+            border-radius: 999px;
+            padding: 8px 14px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 8px rgba(255,191,0,.35);
+        }
+        .btn-instalar.hidden { display: none; }
+
+        /* ===== ÁREA DE CONTEÚDO ===== */
+        .conteudo {
+            flex: 1;
+            width: 100%;
+            max-width: 620px;
+            margin: 0 auto;
+            padding: 16px 16px calc(96px + env(safe-area-inset-bottom));
             display: flex;
             flex-direction: column;
-            gap: 2px;
-            flex: 1 1 150px;
-            transition: flex-basis 0.2s ease-out;
+            gap: 14px;
         }
 
-        .campo label {
-            font-size: 12px;
-            font-weight: bold;
-            color: #000000;
-            background-color: #FFBF00;
-            padding: 2px 8px;
-            border-radius: 3px;
-            display: inline-block;
-            width: fit-content;
+        .cartao {
+            background: var(--branco);
+            border: 1px solid var(--borda);
+            border-radius: var(--raio);
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.04);
         }
+        .cartao .titulo-cartao {
+            display: flex; align-items: center; gap: 8px;
+            font-weight: 700; font-size: 13px;
+            text-transform: uppercase; letter-spacing: .6px;
+            color: var(--texto-suave);
+            margin-bottom: 14px;
+        }
+        .cartao .titulo-cartao .ponto { color: var(--amarelo); }
 
+        .grade { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .campo-full { grid-column: 1 / -1; }
+
+        .campo { display: flex; flex-direction: column; gap: 6px; }
+        .campo label { font-size: 12px; font-weight: 600; color: var(--texto-suave); }
         .campo input,
         .campo textarea {
-            border: 1px solid #aaaaaa;
-            border-radius: 4px;
-            padding: 6px 8px;
-            font-size: 14px;
-            font-family: inherit;
-            color: #000000;
-            background: #ffffff;
             width: 100%;
+            border: 1.5px solid var(--borda);
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-size: 16px;
+            font-family: inherit;
+            color: var(--texto);
+            background: #fafbfc;
+            transition: border-color .15s, box-shadow .15s, background .15s;
         }
-
+        .campo textarea { resize: vertical; min-height: 110px; }
         .campo input:focus,
         .campo textarea:focus {
-            outline: 2px solid #FFBF00;
-            outline-offset: 1px;
+            outline: none;
+            border-color: var(--amarelo);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(255,191,0,.25);
         }
 
-        /* ===== DESCRIÇÃO ===== */
-        .descricao {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            margin-top: 4px;
-        }
-
-        .descricao label {
-            font-size: 14px;
-            font-weight: bold;
-            color: #000000;
-            background-color: #FFBF00;
-            padding: 4px 12px;
-            border-radius: 3px;
-            display: inline-block;
-            width: fit-content;
-        }
-
-        .descricao textarea {
-            border: 1px solid #aaaaaa;
-            border-radius: 4px;
-            padding: 8px 10px;
-            font-size: 14px;
-            font-family: inherit;
-            color: #000000;
-            background: #ffffff;
-            resize: vertical;
-            min-height: 100px;
-            width: 100%;
-        }
-
-        .descricao textarea:focus {
-            outline: 2px solid #FFBF00;
-            outline-offset: 1px;
-        }
-
-        /* ===== SEÇÃO DE FOTOS (DINÂMICA) ===== */
-        .fotos-section {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-top: 6px;
-            flex: 1;
-        }
-
-        .fotos-header {
-            font-size: 14px;
-            font-weight: bold;
-            color: #000000;
-            background-color: #FFBF00;
-            padding: 4px 12px;
-            border-radius: 3px;
-            display: inline-block;
-            width: fit-content;
-        }
-
+        /* ===== FOTOS ===== */
         .fotos-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
+            gap: 10px;
         }
-
         .foto-item {
-            border: 2px dashed #cccccc;
-            border-radius: 8px;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            position: relative;
+            border: 2px dashed #cfd3da;
+            border-radius: 14px;
+            background: #f7f8fa;
             min-height: 150px;
-            background: #f9f9f9;
-            position: relative;
-            transition: border 0.2s;
-        }
-
-        .foto-item:hover {
-            border-color: #aaaaaa;
-        }
-
-        .foto-item input[type="file"] {
-            position: absolute;
-            inset: 0;
-            opacity: 0;
-            cursor: pointer;
-            width: 100%;
-            height: 100%;
-        }
-
-        .foto-placeholder {
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            color: #888888;
-            font-size: 13px;
-            pointer-events: none;
-            text-align: center;
-            gap: 4px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: border-color .15s, transform .05s;
         }
-
-        .foto-placeholder .icone {
-            font-size: 40px;
-            line-height: 1;
-            color: #cccccc;
+        .foto-item:active { transform: scale(.99); }
+        .foto-item.repleto { border-style: solid; border-color: transparent; }
+        .foto-item input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; z-index: 5; }
+        .foto-placeholder {
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            color: var(--texto-suave); font-size: 12px; text-align: center; padding: 10px; pointer-events: none;
         }
-
-        .foto-item img {
-            max-width: 100%;
-            max-height: 180px;
-            object-fit: contain;
-            border-radius: 4px;
-            display: none;
-        }
-
-        .foto-item img.visivel {
-            display: block;
-        }
-
+        .foto-placeholder .icone { font-size: 42px; line-height: 1; }
+        .foto-item img { width: 100%; height: 100%; max-height: 220px; object-fit: contain; border-radius: 12px; display: none; }
+        .foto-item img.visivel { display: block; }
         .btn-remover-foto {
-            margin-top: 6px;
-            background: #e74c3c;
-            color: white;
+            position: absolute; top: 8px; right: 8px; z-index: 10;
+            background: rgba(0,0,0,.62); color: #fff;
+            border: none; border-radius: 999px; width: 26px; height: 26px;
+            font-size: 14px; line-height: 1; cursor: pointer;
+            display: none; align-items: center; justify-content: center;
+        }
+        .btn-remover-foto.visivel { display: inline-flex; }
+
+        /* ===== BARRA INFERIOR DE AÇÕES ===== */
+        .tabbar {
+            position: fixed;
+            left: 0; right: 0; bottom: 0;
+            z-index: 20;
+            background: rgba(255,255,255,.92);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-top: 1px solid var(--borda);
+            padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+            display: flex; gap: 12px;
+            justify-content: center;
+            max-width: 620px;
+            margin: 0 auto;
+        }
+        .tabbar button {
+            flex: 1;
             border: none;
-            border-radius: 4px;
-            padding: 4px 12px;
-            font-size: 12px;
+            border-radius: 14px;
+            padding: 14px 10px;
+            font-size: 15px;
+            font-weight: 700;
+            font-family: inherit;
             cursor: pointer;
-            transition: background 0.2s;
-            display: none;
-            position: relative;
-            z-index: 10;
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            transition: filter .15s, transform .05s;
+        }
+        .tabbar button:active { transform: scale(.98); }
+        .btn-limpar { background: #eceef1; color: var(--texto); }
+        .btn-limpar:hover { filter: brightness(.97); }
+        .btn-print { background: var(--amarelo); color: #000; box-shadow: 0 6px 16px rgba(255,191,0,.35); }
+        .btn-print:hover { filter: brightness(.96); }
+
+        /* barra para celular desloca para ficar embaixo */
+        @media (min-width: 621px) {
+            .tabbar { left: 50%; transform: translateX(-50%); width: 100%; }
         }
 
-        .btn-remover-foto.visivel {
-            display: inline-block;
+        .status-salvo {
+            text-align: center; font-size: 12px; color: var(--texto-suave);
+            padding: 4px 0;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
         }
+        .status-salvo .ok { color: #2f9e44; font-weight: 700; }
 
-        .btn-remover-foto:hover {
-            background: #c0392b;
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed; left: 50%; bottom: 110px; transform: translateX(-50%) translateY(20px);
+            background: var(--escuro); color: #fff; padding: 12px 18px; border-radius: 12px;
+            font-size: 14px; font-weight: 600; opacity: 0; pointer-events: none;
+            transition: opacity .25s, transform .25s; z-index: 40; max-width: 90%;
+            box-shadow: 0 6px 20px rgba(0,0,0,.3);
         }
+        .toast.mostrar { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        .btn-adicionar-foto {
-            background: #FFBF00;
-            color: #000000;
-            border: none;
-            border-radius: 6px;
-            padding: 8px 20px;
-            font-weight: bold;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background 0.2s;
-            align-self: flex-start;
-        }
+        /* ===== IMPRESSÃO: relatório A4 dedicado ===== */
+        #printReport { display: none; }
 
-        .btn-adicionar-foto:hover {
-            background: #e6a800;
-        }
-
-        /* ===== RODAPÉ ===== */
-        .rodape {
-            margin-top: auto;
-            border-top: 2px solid #cccccc;
-            padding-top: 10px;
-            display: flex;
-            justify-content: space-between;
-            font-size: 11px;
-            color: #888888;
-        }
-
-        .rodape span {
-            color: #888888;
-        }
-
-        /* ===== BOTÃO DE IMPRESSÃO & LIMPAR ===== */
-        .botoes-acao {
-            display: flex;
-            gap: 12px;
-            margin-top: 12px;
-            align-self: center;
-        }
-
-        .btn-print {
-            background: #FFBF00;
-            color: #000000;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 30px;
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background 0.2s;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .btn-print:hover {
-            background: #e6a800;
-        }
-
-        .btn-limpar {
-            background: #cccccc;
-            color: #000000;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 30px;
-            font-weight: bold;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background 0.2s;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-        }
-        .btn-limpar:hover {
-            background: #aaaaaa;
-        }
-
-        /* ===== AJUSTES PARA IMPRESSÃO ===== */
         @media print {
-            body {
-                background: white;
-                padding: 0;
-                margin: 0;
-            }
-
-            .a4-page {
-                width: 100%;
-                min-height: 100vh;
+            body { background: #fff; }
+            .appbar, .conteudo, .tabbar, .status-salvo, .toast { display: none !important; }
+            #printReport {
+                display: block;
+                width: 210mm; min-height: 297mm;
+                background: #fff;
                 padding: 15mm 18mm;
-                box-shadow: none;
-                border-radius: 0;
-                margin: 0 auto;
+                color: #000;
+                font-family: Arial, Helvetica, sans-serif;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
             }
-
-            .botoes-acao,
-            .btn-adicionar-foto,
-            .btn-remover-foto,
-            .foto-item input[type="file"],
-            .foto-placeholder {
-                display: none !important;
+            #printReport .p-titulo {
+                font-size: 22px; font-weight: bold; text-align: center; letter-spacing: 2px;
+                border-bottom: 3px solid #FFBF00; padding-bottom: 8px; margin-bottom: 12px;
             }
-
-            .foto-item {
-                border: 1px solid #cccccc !important;
-                background: white !important;
-                min-height: 120px;
-                padding: 6px;
+            #printReport .p-campos {
+                display: flex; flex-wrap: wrap; gap: 8px 18px;
+                margin-bottom: 10px;
             }
-
-            .foto-item img {
-                max-height: 200px !important;
+            #printReport .p-campo { flex: 1 1 150px; display: flex; flex-direction: column; }
+            #printReport .p-label {
+                font-size: 11px; font-weight: bold; color: #000; background: #FFBF00;
+                padding: 2px 8px; border-radius: 3px; width: fit-content; margin-bottom: 2px;
             }
-
-            .campo label,
-            .descricao label,
-            .fotos-header,
-            .titulo-os {
-                background-color: #FFBF00 !important;
-                color: #000000 !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
+            #printReport .p-valor {
+                border: 1px solid #aaa; border-radius: 3px; padding: 4px 6px; min-height: 24px;
+                font-size: 13px; white-space: pre-wrap; word-break: break-word;
             }
-
-            .rodape {
-                border-top-color: #aaa;
+            #printReport .p-secao { margin: 8px 0 4px; }
+            #printReport .p-secao-label {
+                font-size: 13px; font-weight: bold; color: #000; background: #FFBF00;
+                padding: 3px 10px; border-radius: 3px; width: fit-content;
             }
-
-            .fotos-grid {
-                grid-template-columns: repeat(2, 1fr) !important;
-                gap: 12px !important;
+            #printReport .p-desc {
+                border: 1px solid #aaa; border-radius: 3px; padding: 8px; font-size: 13px;
+                min-height: 80px; white-space: pre-wrap; word-break: break-word; margin-top: 4px;
             }
+            #printReport .p-fotos {
+                display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 8px;
+            }
+            #printReport .p-foto {
+                border: 1px solid #ccc; border-radius: 4px; min-height: 110px; overflow: hidden;
+                display: flex; align-items: center; justify-content: center;
+            }
+            #printReport .p-foto img { max-width: 100%; max-height: 170px; object-fit: contain; }
+            #printReport .p-rodape {
+                margin-top: 16px; border-top: 1px solid #aaa; padding-top: 8px;
+                font-size: 11px; color: #666; display: flex; justify-content: space-between;
+            }
+            .p-sem-foto { color: #999; font-size: 11px; }
         }
 
-        /* ===== RESPONSIVO PARA TELAS MENORES ===== */
-        @media screen and (max-width: 800px) {
-            .a4-page {
-                width: 100%;
-                padding: 12px;
-                min-height: auto;
-            }
-
-            .campos-linha {
-                flex-direction: column;
-                gap: 8px;
-            }
-            
-            .campo {
-                flex-basis: auto !important;
-            }
-
-            .fotos-grid {
-                grid-template-columns: 1fr;
-                gap: 12px;
-            }
-            
-            .botoes-acao {
-                flex-direction: column;
-                width: 100%;
-            }
-            .botoes-acao button {
-                width: 100%;
-            }
+        /* ===== Responsivo pequeno ===== */
+        @media screen and (max-width: 420px) {
+            .grade { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
-    <div class="a4-page" id="osTemplate">
-        <!-- Título -->
-        <div class="titulo-os">ORDEM DE SERVIÇO</div>
-
-        <!-- Linha de campos -->
-        <div class="campos-linha">
-            <div class="campo">
-                <label for="data">Data</label>
-                <input type="date" id="data">
-            </div>
-            <div class="campo">
-                <label for="numOS">Nº da OS</label>
-                <input type="text" id="numOS" placeholder="Ex: 001/2026">
-            </div>
-            <div class="campo">
-                <label for="numPTS">Nº da PTS</label>
-                <input type="text" id="numPTS" placeholder="Ex: 12345">
-            </div>
-            <div class="campo">
-                <label for="equipamento">Equipamento</label>
-                <input type="text" id="equipamento" placeholder="Ex: Trator X">
-            </div>
-            <div class="campo">
-                <label for="executantes">Executantes</label>
-                <input type="text" id="executantes" placeholder="Nome(s) do(s) executor(es)">
-            </div>
-            <div class="campo">
-                <label for="horimetro">Horímetro</label>
-                <input type="text" id="horimetro" placeholder="Ex: 1234,5 h">
-            </div>
+    <!-- ===== APPBAR ===== -->
+    <header class="appbar">
+        <img class="logo" src="icon.png" alt="Logo OS">
+        <div class="ident">
+            <span class="nome">Ordem de Serviço</span>
+            <span class="subtitulo">Thermix • Fotos e Relatórios</span>
         </div>
+        <button class="btn-instalar hidden" id="btnInstalar">📲 Instalar</button>
+    </header>
 
-        <!-- Descrição -->
-        <div class="descricao">
-            <label for="descricao">Descrição da Atividade</label>
-            <textarea id="descricao" rows="4" placeholder="Descreva detalhadamente a atividade executada..."></textarea>
-        </div>
+    <!-- ===== CONTEÚDO (visual de app) ===== -->
+    <main class="conteudo" id="formApp">
 
-        <!-- Seção de Fotos (dinâmica) -->
-        <div class="fotos-section">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                <span class="fotos-header">Fotos (adicione quantas precisar)</span>
-                <button class="btn-adicionar-foto" id="btnAdicionarFoto">+ Adicionar Foto</button>
+        <section class="cartao">
+            <div class="titulo-cartao"><span class="ponto">●</span> Dados da OS</div>
+            <div class="grade">
+                <div class="campo">
+                    <label for="data">Data</label>
+                    <input type="date" id="data">
+                </div>
+                <div class="campo">
+                    <label for="numOS">Nº da OS</label>
+                    <input type="text" id="numOS" placeholder="Ex: 001/2026" inputmode="text">
+                </div>
+                <div class="campo">
+                    <label for="numPTS">Nº da PTS</label>
+                    <input type="text" id="numPTS" placeholder="Ex: 12345" inputmode="numeric">
+                </div>
+                <div class="campo">
+                    <label for="horimetro">Horímetro</label>
+                    <input type="text" id="horimetro" placeholder="Ex: 1234,5 h" inputmode="decimal">
+                </div>
             </div>
-            <div class="fotos-grid" id="fotosGrid">
-                <!-- Os itens de foto serão inseridos aqui via JavaScript -->
+        </section>
+
+        <section class="cartao">
+            <div class="titulo-cartao"><span class="ponto">●</span> Equipamento & Equipe</div>
+            <div class="grade">
+                <div class="campo campo-full">
+                    <label for="equipamento">Equipamento</label>
+                    <input type="text" id="equipamento" placeholder="Ex: Trator X">
+                </div>
+                <div class="campo campo-full">
+                    <label for="executantes">Executantes</label>
+                    <input type="text" id="executantes" placeholder="Nome(s) do(s) executor(es)">
+                </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Rodapé -->
-        <div class="rodape">
-            <span>Gerado em: <span id="dataGeracao"></span></span>
-            <span>OS - Template v2.1 (PWA)</span>
-        </div>
+        <section class="cartao">
+            <div class="titulo-cartao"><span class="ponto">●</span> Descrição da Atividade</div>
+            <div class="campo">
+                <textarea id="descricao" placeholder="Descreva detalhadamente a atividade executada..."></textarea>
+            </div>
+        </section>
 
-        <!-- Botões de ação -->
-        <div class="botoes-acao">
-            <button class="btn-limpar" id="btnLimpar">🗑️ Limpar Tudo</button>
-            <button class="btn-print" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
-        </div>
-    </div>
+        <section class="cartao">
+            <div class="titulo-cartao"><span class="ponto">●</span> Fotos da OS</div>
+            <div class="fotos-grid" id="fotosGrid"></div>
+        </section>
+
+        <div class="status-salvo" id="statusSalvo"><span class="ok">✔</span> Salvo automaticamente neste dispositivo</div>
+    </main>
+
+    <!-- ===== BARRA DE AÇÕES ===== -->
+    <footer class="tabbar">
+        <button class="btn-limpar" id="btnLimpar">🗑️ Limpar</button>
+        <button class="btn-print" id="btnPrint">🖨️ Imprimir / PDF</button>
+    </footer>
+
+    <!-- ===== TEMPLATE DE IMPRESSÃO (A4) ===== -->
+    <div id="printReport"></div>
+
+    <!-- ===== TOAST ===== -->
+    <div class="toast" id="toast"></div>
 
     <script>
         // ===== REGISTRO DO SERVICE WORKER (PWA) =====
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('Service Worker registrado com sucesso!'))
                     .catch(err => console.log('Erro ao registrar Service Worker:', err));
             });
         }
 
-        // ===== INICIALIZAÇÃO E AUTO-SAVE =====
-        document.getElementById('dataGeracao').textContent = new Date().toLocaleDateString('pt-BR');
-        
-        // Setar data de hoje por padrão se não houver no cache
-        const inputData = document.getElementById('data');
-        if(!inputData.value) {
-            inputData.valueAsDate = new Date();
+        // ===== TOAST =====
+        let toastTimer;
+        function mostrarToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('mostrar');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => t.classList.remove('mostrar'), 2600);
         }
 
-        // Campos para salvar no LocalStorage
+        // ===== INSTALAÇÃO DO APP =====
+        let deferredPrompt = null;
+        const btnInstalar = document.getElementById('btnInstalar');
+
+        // Se já está rodando como app instalado, esconde o botão
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+            || window.navigator.standalone === true;
+        if (isStandalone) { btnInstalar.classList.add('hidden'); }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (!isStandalone) { btnInstalar.classList.remove('hidden'); }
+        });
+
+        btnInstalar.addEventListener('click', async () => {
+            if (!deferredPrompt) { mostrarToast('Use o menu do navegador → "Adicionar à tela inicial"'); return; }
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                btnInstalar.classList.add('hidden');
+            }
+            deferredPrompt = null;
+        });
+
+        window.addEventListener('appinstalled', () => {
+            btnInstalar.classList.add('hidden');
+            mostrarToast('App instalado! ✔ Encontre o ícone na sua tela inicial.');
+        });
+
+        // ===== INICIALIZAÇÃO / AUTO-SAVE =====
+        const inputData = document.getElementById('data');
         const camposSave = ['data', 'numOS', 'numPTS', 'equipamento', 'executantes', 'horimetro', 'descricao'];
-        
-        // Carregar dados salvos
+
         camposSave.forEach(id => {
             const el = document.getElementById(id);
             const saved = localStorage.getItem('os_cache_' + id);
-            if (saved !== null) {
-                el.value = saved;
-            }
-            // Salvar ao digitar
+            if (saved !== null) { el.value = saved; }
             el.addEventListener('input', () => {
                 localStorage.setItem('os_cache_' + id, el.value);
             });
         });
+        if (!inputData.value) { inputData.valueAsDate = new Date(); }
 
-        // Limpar formulário e apagar cache (com confirmação)
-        document.getElementById('btnLimpar').addEventListener('click', () => {
-            if(confirm('Tem certeza que deseja apagar todos os dados preenchidos?')) {
-                camposSave.forEach(id => {
-                    document.getElementById(id).value = '';
-                    localStorage.removeItem('os_cache_' + id);
-                });
-                inputData.valueAsDate = new Date(); // Reseta data para hoje
-                document.getElementById('fotosGrid').innerHTML = '';
-                criarItemFoto();
-                criarItemFoto();
-            }
-        });
-
-        // ===== LÓGICA DE CAMPOS DINÂMICOS & FALLBACK =====
-        
-        // Alongamento dinâmico do campo Executantes
-        const campoExecutantes = document.getElementById('executantes');
-        const checarTamanho = () => {
-            const tamanhoTexto = campoExecutantes.value.length;
-            if (tamanhoTexto > 18) {
-                campoExecutantes.parentElement.style.flexBasis = (150 + (tamanhoTexto - 18) * 8) + 'px';
-            } else {
-                campoExecutantes.parentElement.style.flexBasis = '150px';
-            }
-        };
-        campoExecutantes.addEventListener('input', checarTamanho);
-        checarTamanho(); // Checar no carregamento também
-
-        // Fallback Horímetro "N/A"
+        // Horímetro "N/A" fallback
         const horimetro = document.getElementById('horimetro');
-        const checarHorimetro = () => {
-            if (!horimetro.value.trim()) {
-                horimetro.value = 'N/A';
-                localStorage.setItem('os_cache_horimetro', 'N/A');
-            }
-        };
-
-        horimetro.addEventListener('blur', checarHorimetro);
-        horimetro.addEventListener('focus', () => {
-            if (horimetro.value === 'N/A') {
-                horimetro.value = '';
-            }
+        horimetro.addEventListener('blur', () => {
+            if (!horimetro.value.trim()) { horimetro.value = 'N/A'; localStorage.setItem('os_cache_horimetro','N/A'); }
         });
-        window.addEventListener('beforeprint', checarHorimetro);
+        horimetro.addEventListener('focus', () => {
+            if (horimetro.value === 'N/A') { horimetro.value = ''; }
+        });
 
         // ===== GERENCIADOR DE FOTOS =====
         const grid = document.getElementById('fotosGrid');
@@ -558,17 +454,14 @@
 
             const placeholder = document.createElement('div');
             placeholder.className = 'foto-placeholder';
-            placeholder.innerHTML = `
-                <span class="icone">🖼️</span>
-                <span>Clique para adicionar foto</span>
-            `;
+            placeholder.innerHTML = '<span class="icone">📷</span><span>Adicionar foto</span>';
 
             const img = document.createElement('img');
             img.alt = 'Foto';
 
             const btnRemover = document.createElement('button');
             btnRemover.className = 'btn-remover-foto';
-            btnRemover.textContent = '✕ Remover';
+            btnRemover.textContent = '✕';
             btnRemover.type = 'button';
 
             item.appendChild(input);
@@ -586,6 +479,7 @@
                         img.classList.add('visivel');
                         placeholder.style.display = 'none';
                         btnRemover.classList.add('visivel');
+                        item.classList.add('repleto');
                     };
                     reader.readAsDataURL(file);
                 } else {
@@ -593,16 +487,10 @@
                 }
             });
 
-            btnRemover.addEventListener('click', function() {
+            btnRemover.addEventListener('click', function(ev) {
+                ev.stopPropagation();
                 limparItem(item);
                 input.value = '';
-            });
-
-            placeholder.addEventListener('click', function() {
-                input.click();
-            });
-            img.addEventListener('click', function() {
-                input.click();
             });
 
             return item;
@@ -613,20 +501,98 @@
             const placeholder = item.querySelector('.foto-placeholder');
             const btnRemover = item.querySelector('.btn-remover-foto');
             const input = item.querySelector('input[type="file"]');
-
             img.src = '';
             img.classList.remove('visivel');
             placeholder.style.display = 'flex';
             btnRemover.classList.remove('visivel');
+            item.classList.remove('repleto');
             input.value = '';
+        }
+
+        // Sempre garante que existam 2 espaços para adicionar foto
+        function garantirSlots() {
+            const itens = grid.querySelectorAll('.foto-item');
+            const preenchidos = Array.from(itens).filter(i => i.classList.contains('repleto')).length;
+            let livres = itens.length - preenchidos;
+            while (livres < 2) { criarItemFoto(); livres++; }
         }
 
         criarItemFoto();
         criarItemFoto();
 
-        document.getElementById('btnAdicionarFoto').addEventListener('click', function() {
-            criarItemFoto();
+        // ===== LIMPAR =====
+        document.getElementById('btnLimpar').addEventListener('click', () => {
+            if (confirm('Tem certeza que deseja apagar todos os dados preenchidos?')) {
+                camposSave.forEach(id => {
+                    document.getElementById(id).value = '';
+                    localStorage.removeItem('os_cache_' + id);
+                });
+                inputData.valueAsDate = new Date();
+                grid.innerHTML = '';
+                criarItemFoto();
+                criarItemFoto();
+                mostrarToast('Tudo limpo ✔');
+            }
         });
+
+        // ===== IMPRESSÃO (monta relatório A4) =====
+        function valorOuVazio(id) {
+            const el = document.getElementById(id);
+            return el && el.value.trim() ? el.value.trim() : '';
+        }
+
+        function prepararImpressao() {
+            const r = document.getElementById('printReport');
+
+            const campos = [
+                ['Data', valorOuVazio('data')],
+                ['Nº da OS', valorOuVazio('numOS')],
+                ['Nº da PTS', valorOuVazio('numPTS')],
+                ['Equipamento', valorOuVazio('equipamento')],
+                ['Executantes', valorOuVazio('executantes')],
+                ['Horímetro', valorOuVazio('horimetro')]
+            ];
+
+            let html = '<div class="p-titulo">ORDEM DE SERVIÇO</div>';
+            html += '<div class="p-campos">';
+            campos.forEach(([label, valor]) => {
+                html += `<div class="p-campo"><span class="p-label">${label}</span><div class="p-valor">${valor || ''}</div></div>`;
+            });
+            html += '</div>';
+
+            const desc = valorOuVazio('descricao');
+            if (desc) {
+                html += '<div class="p-secao"><span class="p-secao-label">Descrição da Atividade</span></div>';
+                html += `<div class="p-desc">${desc}</div>`;
+            }
+
+            // Fotos preenchidas
+            const fotos = Array.from(grid.querySelectorAll('.foto-item'))
+                .filter(i => i.classList.contains('repleto'))
+                .map(i => i.querySelector('img').src);
+
+            if (fotos.length) {
+                html += '<div class="p-secao"><span class="p-secao-label">Fotos</span></div>';
+                html += '<div class="p-fotos">';
+                fotos.forEach(src => { html += `<div class="p-foto"><img src="${src}"></div>`; });
+                html += '</div>';
+            }
+
+            const dataG = new Date().toLocaleDateString('pt-BR');
+            html += '<div class="p-rodape">' +
+                `<span>Gerado em: ${dataG}</span>` +
+                '<span>OS - Template v3.0 (PWA)</span></div>';
+
+            r.innerHTML = html;
+        }
+
+        document.getElementById('btnPrint').addEventListener('click', () => {
+            prepararImpressao();
+            window.print();
+        });
+
+        // Impressão via atalho Ctrl+P preserva o relatório
+        window.addEventListener('beforeprint', prepararImpressao);
     </script>
 </body>
 </html>
