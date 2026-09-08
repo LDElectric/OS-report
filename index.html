@@ -285,53 +285,71 @@
 
         /* ===== RELATÓRIO A4 (usado no PDF gerado e na impressão) ===== */
         #printReport {
-            position: fixed;
-            left: -200vw;
-            top: 0;
-            width: 794px;
-            background: #fff;
-            color: #000;
-            font-family: Arial, Helvetica, sans-serif;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
+            position: fixed; left: -200vw; top: 0; width: 794px;
+            background: #fff; color: #1c1c1c;
+            font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+            -webkit-print-color-adjust: exact; print-color-adjust: exact;
         }
-        #printReport .p-titulo {
-            font-size: 22px; font-weight: bold; text-align: center; letter-spacing: 2px;
-            border-bottom: 3px solid #FFBF00; padding-bottom: 8px; margin-bottom: 12px;
+        /* Cabeçalho */
+        #printReport .p-head {
+            background: #1b1b1b; color: #fff;
+            padding: 26px 46px 22px;
+            display: flex; justify-content: space-between; align-items: flex-end;
+            border-bottom: 6px solid #FFBF00;
         }
-        #printReport .p-campos {
-            display: flex; flex-wrap: wrap; gap: 8px 18px;
-            margin-bottom: 10px;
+        #printReport .p-kicker {
+            font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #FFBF00; font-weight: 700;
         }
-        #printReport .p-campo { flex: 1 1 150px; display: flex; flex-direction: column; }
-        #printReport .p-label {
-            font-size: 11px; font-weight: bold; color: #000; background: #FFBF00;
-            padding: 2px 8px; border-radius: 3px; width: fit-content; margin-bottom: 2px;
+        #printReport .p-titulo { font-size: 30px; font-weight: 800; letter-spacing: .5px; margin-top: 4px; }
+        #printReport .p-sub { font-size: 12px; color: #c6c6c6; margin-top: 3px; }
+        #printReport .p-os-badge {
+            text-align: right;
+            background: #FFBF00; color: #000;
+            border-radius: 12px; padding: 10px 16px; min-width: 130px;
         }
-        #printReport .p-valor {
-            border: 1px solid #aaa; border-radius: 3px; padding: 4px 6px; min-height: 24px;
-            font-size: 13px; white-space: pre-wrap; word-break: break-word;
+        #printReport .p-os-badge .b-label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+        #printReport .p-os-badge .b-num { display: block; font-size: 22px; font-weight: 800; margin-top: 2px; }
+
+        /* Corpo */
+        #printReport .p-inner { padding: 26px 46px 24px; }
+
+        #printReport .p-detalhes { display: flex; flex-wrap: wrap; }
+        #printReport .p-field { flex: 1 1 175px; padding: 2px 20px 14px 0; }
+        #printReport .p-field.full { flex: 1 1 100%; padding-right: 0; }
+        #printReport .p-field .p-label {
+            font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+            color: #8a8f98; font-weight: 700; display: block; margin-bottom: 5px;
         }
-        #printReport .p-secao { margin: 8px 0 4px; }
+        #printReport .p-field .p-valor {
+            font-size: 15px; font-weight: 700; color: #1c1c1c;
+            white-space: pre-wrap; word-break: break-word;
+            padding-bottom: 7px; border-bottom: 1.5px solid #e2e4ea;
+        }
+
+        #printReport .p-secao { margin-top: 18px; }
         #printReport .p-secao-label {
-            font-size: 13px; font-weight: bold; color: #000; background: #FFBF00;
-            padding: 3px 10px; border-radius: 3px; width: fit-content;
+            font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 800; color: #000;
+            display: flex; align-items: center; gap: 8px; margin-bottom: 9px;
         }
+        #printReport .p-secao-label::before { content: ''; width: 4px; height: 14px; background: #FFBF00; border-radius: 2px; }
+
         #printReport .p-desc {
-            border: 1px solid #aaa; border-radius: 3px; padding: 8px; font-size: 13px;
-            min-height: 80px; white-space: pre-wrap; word-break: break-word; margin-top: 4px;
+            background: #f6f7f9; border: 1px solid #eceef2; border-radius: 10px;
+            padding: 13px 15px; font-size: 13px; line-height: 1.55;
+            white-space: pre-wrap; word-break: break-word; min-height: 70px;
         }
-        #printReport .p-fotos {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 8px;
-        }
+
+        #printReport .p-fotos { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
         #printReport .p-foto {
-            border: 1px solid #ccc; border-radius: 4px; min-height: 110px; overflow: hidden;
-            display: flex; align-items: center; justify-content: center;
+            background: #fafafa; border: 1px solid #eceef2; border-radius: 10px; overflow: hidden;
+            min-height: 130px; display: flex; align-items: center; justify-content: center; padding: 6px;
         }
-        #printReport .p-foto img { max-width: 100%; max-height: 170px; object-fit: contain; }
+        #printReport .p-foto img { max-width: 100%; max-height: 200px; object-fit: contain; border-radius: 6px; }
+
         #printReport .p-rodape {
-            margin-top: 16px; border-top: 1px solid #aaa; padding-top: 8px;
-            font-size: 11px; color: #666; display: flex; justify-content: space-between;
+            margin-top: 22px; padding-top: 12px; border-top: 1px solid #e2e4ea;
+            font-size: 11px; color: #9aa0a8;
+            display: flex; justify-content: space-between;
         }
         .p-sem-foto { color: #999; font-size: 11px; }
 
@@ -347,7 +365,7 @@
             left: auto;
             width: 794px;
             min-height: 1123px;
-            padding: 57px 68px;
+            padding: 0;
             margin: 0 auto;
             background: #fff;
         }
@@ -361,7 +379,7 @@
                 left: auto;
                 width: auto;
                 min-height: 0;
-                padding: 15mm 18mm;
+                padding: 0;
             }
         }
 
@@ -729,47 +747,77 @@
             return el && el.value.trim() ? el.value.trim() : '';
         }
 
+        function esc(s) {
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+        function fmtData(v) {
+            if (!v) return '';
+            const p = String(v).split('-');
+            if (p.length === 3) return p[2] + '/' + p[1] + '/' + p[0];
+            return v;
+        }
+        function campoHtml(label, valor, full) {
+            return '<div class="p-field' + (full ? ' full' : '') + '">' +
+                '<span class="p-label">' + label + '</span>' +
+                '<span class="p-valor">' + (valor ? esc(valor) : '&nbsp;') + '</span></div>';
+        }
+        function secaoHtml(titulo, conteudo) {
+            return '<div class="p-secao"><span class="p-secao-label">' + titulo + '</span>' + conteudo + '</div>';
+        }
+
         function prepararImpressao() {
             const r = document.getElementById('printReport');
+            const data = fmtData(valorOuVazio('data'));
+            const os = valorOuVazio('numOS');
+            const pts = valorOuVazio('numPTS');
+            const eq = valorOuVazio('equipamento');
+            const ex = valorOuVazio('executantes');
+            const hm = valorOuVazio('horimetro');
+            const desc = valorOuVazio('descricao');
 
-            const campos = [
-                ['Data', valorOuVazio('data')],
-                ['Nº da OS', valorOuVazio('numOS')],
-                ['Nº da PTS', valorOuVazio('numPTS')],
-                ['Equipamento', valorOuVazio('equipamento')],
-                ['Executantes', valorOuVazio('executantes')],
-                ['Horímetro', valorOuVazio('horimetro')]
-            ];
+            let html = '';
 
-            let html = '<div class="p-titulo">ORDEM DE SERVIÇO</div>';
-            html += '<div class="p-campos">';
-            campos.forEach(([label, valor]) => {
-                html += `<div class="p-campo"><span class="p-label">${label}</span><div class="p-valor">${valor || ''}</div></div>`;
-            });
+            // Cabeçalho
+            html += '<div class="p-head">' +
+                '<div><span class="p-kicker">LD Electric</span>' +
+                '<div class="p-titulo">Ordem de Serviço</div>' +
+                '<div class="p-sub">Relatório de atividade técnica</div></div>' +
+                '<div class="p-os-badge"><span class="b-label">Nº da OS</span>' +
+                '<span class="b-num">' + (os ? esc(os) : '—') + '</span></div>' +
+                '</div>';
+
+            html += '<div class="p-inner">';
+
+            // Detalhes
+            html += '<div class="p-detalhes">';
+            html += campoHtml('Data', data);
+            html += campoHtml('Nº da PTS', pts);
+            html += campoHtml('Horímetro', hm);
+            html += campoHtml('Equipamento', eq, true);
+            html += campoHtml('Executantes', ex, true);
             html += '</div>';
 
-            const desc = valorOuVazio('descricao');
+            // Descrição
             if (desc) {
-                html += '<div class="p-secao"><span class="p-secao-label">Descrição da Atividade</span></div>';
-                html += `<div class="p-desc">${desc}</div>`;
+                html += secaoHtml('Descrição da Atividade', '<div class="p-desc">' + esc(desc) + '</div>');
             }
 
-            // Fotos preenchidas
+            // Fotos
             const fotos = Array.from(grid.querySelectorAll('.foto-item'))
                 .filter(i => i.classList.contains('repleto'))
                 .map(i => i.querySelector('img').src);
-
             if (fotos.length) {
-                html += '<div class="p-secao"><span class="p-secao-label">Fotos</span></div>';
-                html += '<div class="p-fotos">';
-                fotos.forEach(src => { html += `<div class="p-foto"><img src="${src}"></div>`; });
-                html += '</div>';
+                let fot = '<div class="p-fotos">';
+                fotos.forEach(src => { fot += '<div class="p-foto"><img src="' + src + '"></div>'; });
+                fot += '</div>';
+                html += secaoHtml('Fotos da OS', fot);
             }
 
             const dataG = new Date().toLocaleDateString('pt-BR');
-            html += '<div class="p-rodape">' +
-                `<span>Gerado em: ${dataG}</span>` +
-                '<span>OS - Template v3.0 (PWA)</span></div>';
+            html += '<div class="p-rodape"><span>Gerado em: ' + dataG + '</span>' +
+                '<span>Ordem de Serviço — LD Electric</span></div>';
+
+            html += '</div>'; // p-inner
 
             r.innerHTML = html;
         }
