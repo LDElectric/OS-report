@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1356" height="835" viewBox="0 0 1356 835" role="img" aria-labelledby="title desc">
+  <title id="title">Pernambuco III</title>
+  <desc id="desc">Logotipo em azul marinho e verde, com símbolo aerodinâmico e o texto Pernambuco III.</desc>
+  <g id="marca" fill="none" stroke="none">
+    <!-- arco/swoosh azul principal -->
+    <path fill="#385486" d="M222 509 C365 458 521 410 696 378 C817 356 919 335 1002 333 C1065 331 1100 347 1100 379 C1100 421 1035 464 984 509 L874 509 C925 475 981 433 1008 405 C1036 376 1019 360 979 357 C891 351 756 380 644 406 C484 443 345 482 222 509 Z"/>
+    <!-- filete verde interno -->
+    <path fill="#32934d" d="M397 509 C545 463 690 426 822 403 C884 392 935 383 981 382 C991 382 991 389 985 399 C982 403 979 403 973 403 C849 408 704 438 570 470 C504 486 445 501 397 509 Z"/>
+    <!-- faixa verde externa direita -->
+    <path fill="#32934d" d="M1115 403 C1138 417 1148 435 1148 451 C1148 474 1127 495 1100 509 L1022 509 C1052 482 1081 458 1099 437 C1108 426 1113 414 1115 403 Z"/>
+    <!-- haste curva azul esquerda -->
+    <path fill="#385486" d="M789 248 C806 252 811 287 802 327 C793 369 773 413 750 451 L715 509 L701 509 C722 471 744 427 759 386 C780 328 789 282 789 248 Z"/>
+    <!-- haste curva azul direita -->
+    <path fill="#385486" d="M840 279 C855 287 856 319 849 350 C841 388 823 428 801 466 L777 509 L762 509 C781 477 798 441 811 405 C831 350 839 310 840 279 Z"/>
+  </g>
+
+  <!-- lettering -->
+  <g id="tipografia" fill="#385486" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-style="italic">
+    <text x="207" y="583" font-size="72" letter-spacing="0.5">PERNAMBUCO</text>
+  </g>
+  <!-- numeral romano, com serifas e sublinhado característicos -->
+  <g id="numeral" fill="#385486" font-family="Georgia, 'Times New Roman', serif" font-weight="700" font-style="italic">
+    <text x="985" y="583" font-size="73" letter-spacing="-3">III</text>
+    <path d="M982 592 L1090 592 L1087 600 L979 600 Z"/>
+  </g>
+</svg>
