@@ -1,10 +1,11 @@
-const CACHE_NAME = 'os-fotos-v5';
+const CACHE_NAME = 'os-fotos-v6';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './icon.png',
-  './lib/html2pdf.bundle.min.js'
+  './lib/html2canvas.min.js',
+  './lib/jspdf.umd.min.js'
 ];
 
 // Instala: pré-cacheia os arquivos essenciais
