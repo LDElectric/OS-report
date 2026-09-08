@@ -6,5 +6,6 @@ Desktop.ini
 # Cache
 node_modules/
 
-# Screenshots de diagnóstico
+# Screenshots e modelo local de edição
 print_*
+modelo_relatorio.html

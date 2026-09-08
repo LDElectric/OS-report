@@ -135,6 +135,7 @@
         .campo { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
         .campo label { font-size: 12px; font-weight: 600; color: var(--texto-suave); }
         .campo input,
+        .campo select,
         .campo textarea {
             width: 100%;
             min-width: 0;
@@ -152,6 +153,7 @@
         .campo input[type="date"] { width: 100%; min-width: 0; box-sizing: border-box; }
         .campo textarea { resize: vertical; min-height: 110px; }
         .campo input:focus,
+        .campo select:focus,
         .campo textarea:focus {
             outline: none;
             border-color: var(--amarelo);
@@ -294,11 +296,19 @@
         #printReport .p-head {
             background: #1b1b1b; color: #fff;
             padding: 26px 46px 22px;
-            display: flex; justify-content: space-between; align-items: flex-end;
+            display: flex; justify-content: space-between; align-items: center;
             border-bottom: 6px solid #FFBF00;
         }
+        #printReport .p-head-left { display: flex; align-items: center; gap: 16px; min-width: 0; }
+        #printReport .p-id { min-width: 0; }
+        #printReport .p-logo {
+            height: 66px; width: auto; max-width: 210px;
+            object-fit: contain; background: #fff; border-radius: 10px; padding: 8px 10px;
+            flex: 0 0 auto;
+        }
         #printReport .p-kicker {
-            font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #FFBF00; font-weight: 700;
+            font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #FFBF00; font-weight: 700;
+            display: block; line-height: 1.2;
         }
         #printReport .p-titulo { font-size: 30px; font-weight: 800; letter-spacing: .5px; margin-top: 4px; }
         #printReport .p-sub { font-size: 12px; color: #c6c6c6; margin-top: 3px; }
@@ -409,6 +419,14 @@
         <section class="cartao">
             <div class="titulo-cartao"><span class="ponto">●</span> Dados da OS</div>
             <div class="grade">
+                <div class="campo campo-full">
+                    <label for="planta">Planta / Usina</label>
+                    <select id="planta">
+                        <option value="">Selecione a planta</option>
+                        <option value="pernambuco3">UTE Pernambuco III</option>
+                        <option value="borborema">UTE Borborema Energética S.A.</option>
+                    </select>
+                </div>
                 <div class="campo">
                     <label for="data">Data</label>
                     <input type="date" id="data">
@@ -538,15 +556,16 @@
 
         // ===== INICIALIZAÇÃO / AUTO-SAVE =====
         const inputData = document.getElementById('data');
-        const camposSave = ['data', 'numOS', 'numPTS', 'equipamento', 'executantes', 'horimetro', 'descricao'];
-
+        const camposSave = ['data', 'numOS', 'numPTS', 'equipamento', 'executantes', 'horimetro', 'descricao', 'planta'];
         camposSave.forEach(id => {
             const el = document.getElementById(id);
-            const saved = localStorage.getItem('os_cache_' + id);
-            if (saved !== null) { el.value = saved; }
-            el.addEventListener('input', () => {
-                localStorage.setItem('os_cache_' + id, el.value);
-            });
+            if (el) {
+                const saved = localStorage.getItem('os_cache_' + id);
+                if (saved !== null) { el.value = saved; }
+                el.addEventListener('input', () => {
+                    localStorage.setItem('os_cache_' + id, el.value);
+                });
+            }
         });
         if (!inputData.value) { inputData.valueAsDate = new Date(); }
 
@@ -747,9 +766,18 @@
             return el && el.value.trim() ? el.value.trim() : '';
         }
 
-        // ===== IDENTIDADE DA EMPRESA (edite aqui) =====
-        // Quando souber o nome/logo, preencha aqui — aplica no cabeçalho e no rodapé do relatório.
-        const CONFIG_EMPRESA = { nome: '', logo: null };
+        // ===== PLANTAS / USINAS =====
+        // Cada usina tem nome + logo. O usuário seleciona a usina no formulário
+        // e o relatório usa o cabeçalho correspondente (logo + nome).
+        const PLANTAS = {
+            pernambuco3: { nome: 'UTE Pernambuco III', logo: './p3_logo.png' },
+            borborema: { nome: 'UTE Borborema Energética S.A.', logo: './besa_logo2.png' }
+        };
+        function plantaAtual() {
+            const sel = document.getElementById('planta');
+            const v = sel ? sel.value : '';
+            return PLANTAS[v] || null;
+        }
 
         function esc(s) {
             return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -781,13 +809,21 @@
 
             let html = '';
 
-            // Cabeçalho
-            const nomeEmpresa = CONFIG_EMPRESA.nome;
-            const kicker = nomeEmpresa ? '<span class="p-kicker">' + esc(nomeEmpresa) + '</span>' : '';
-            html += '<div class="p-head">' +
-                '<div>' + kicker +
+            // Planta selecionada
+            const planta = plantaAtual();
+
+            // Cabeçalho: logo à esquerda + nome da planta
+            let marca = '<div class="p-id">' +
                 '<div class="p-titulo">Ordem de Serviço</div>' +
-                '<div class="p-sub">Relatório de atividade técnica</div></div>' +
+                '<div class="p-sub">Relatório de atividade técnica</div></div>';
+            if (planta) {
+                const logo = planta.logo ? '<img class="p-logo" src="' + planta.logo + '" alt="Logo">' : '';
+                marca = logo +
+                    '<div class="p-id"><span class="p-kicker">' + esc(planta.nome) + '</span>' +
+                    '<div class="p-titulo">Ordem de Serviço</div>' +
+                    '<div class="p-sub">Relatório de atividade técnica</div></div>';
+            }
+            html += '<div class="p-head"><div class="p-head-left">' + marca + '</div>' +
                 '<div class="p-os-badge"><span class="b-label">Nº da OS</span>' +
                 '<span class="b-num">' + (os ? esc(os) : '—') + '</span></div>' +
                 '</div>';
@@ -821,7 +857,7 @@
 
             const dataG = new Date().toLocaleDateString('pt-BR');
             html += '<div class="p-rodape"><span>Gerado em: ' + dataG + '</span>' +
-                '<span>' + (nomeEmpresa || 'Ordem de Serviço') + '</span></div>';
+                '<span>' + (planta ? planta.nome : 'Ordem de Serviço') + '</span></div>';
 
             html += '</div>'; // p-inner
 
