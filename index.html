@@ -302,8 +302,8 @@
         #printReport .p-head-left { display: flex; align-items: center; gap: 16px; min-width: 0; }
         #printReport .p-id { min-width: 0; }
         #printReport .p-logo {
-            height: 66px; width: auto; max-width: 210px;
-            object-fit: contain; background: #fff; border-radius: 10px; padding: 8px 10px;
+            height: 60px; width: auto; max-width: 230px;
+            object-fit: contain;
             flex: 0 0 auto;
         }
         #printReport .p-kicker {
@@ -770,8 +770,8 @@
         // Cada usina tem nome + logo. O usuário seleciona a usina no formulário
         // e o relatório usa o cabeçalho correspondente (logo + nome).
         const PLANTAS = {
-            pernambuco3: { nome: 'UTE Pernambuco III', logo: './p3_logo.png' },
-            borborema: { nome: 'UTE Borborema Energética S.A.', logo: './besa_logo2.png' }
+            pernambuco3: { nome: 'UTE Pernambuco III', logo: './p3_logo_branco.png' },
+            borborema: { nome: 'UTE Borborema Energética S.A.', logo: './besa_logo_branco.png' }
         };
         function plantaAtual() {
             const sel = document.getElementById('planta');

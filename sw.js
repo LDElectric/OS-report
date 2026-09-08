@@ -1,11 +1,11 @@
-const CACHE_NAME = 'os-fotos-v7';
+const CACHE_NAME = 'os-fotos-v8';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './icon.png',
-  './p3_logo.png',
-  './besa_logo2.png',
+  './p3_logo_branco.png',
+  './besa_logo_branco.png',
   './lib/html2canvas.min.js',
   './lib/jspdf.umd.min.js'
 ];
