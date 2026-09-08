@@ -510,87 +510,180 @@
         });
         if (!inputData.value) { inputData.valueAsDate = new Date(); }
 
-        // ===== GERENCIADOR DE FOTOS =====
+        // ===== GERENCIADOR DE FOTOS (com persistência local) =====
         const grid = document.getElementById('fotosGrid');
-        let contadorFotos = 0;
+        let idSeq = 0;
+        let fotos = [];          // fotos atuais na tela: { id, url }
+        let dbAberto = false;
+        let db = null;
 
-        function criarItemFoto() {
+        // --- IndexedDB guarda as fotos no aparelho (sobrevivem ao F5) ---
+        const DB_NAME = 'os-report-fotos';
+        const STORE = 'fotos';
+
+        function abrirDB() {
+            return new Promise((resolve, reject) => {
+                if (!('indexedDB' in window)) return reject(new Error('sem indexedDB'));
+                const req = indexedDB.open(DB_NAME, 1);
+                req.onupgradeneeded = (e) => {
+                    const d = e.target.result;
+                    if (!d.objectStoreNames.contains(STORE)) {
+                        d.createObjectStore(STORE, { keyPath: 'id' });
+                    }
+                };
+                req.onsuccess = () => { db = req.result; resolve(db); };
+                req.onerror = () => reject(req.error);
+            });
+        }
+        async function abrirDBSePrecisar() {
+            if (!dbAberto) { await abrirDB(); dbAberto = true; }
+        }
+        function dbSalvar(reg) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE, 'readwrite');
+                tx.objectStore(STORE).put(reg);
+                tx.oncomplete = resolve;
+                tx.onerror = () => reject(tx.error);
+            });
+        }
+        function dbTodas() {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE, 'readonly');
+                const r = tx.objectStore(STORE).getAll();
+                r.onsuccess = () => resolve(r.result || []);
+                r.onerror = () => reject(r.error);
+            });
+        }
+        function dbRemover(id) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE, 'readwrite');
+                tx.objectStore(STORE).delete(id);
+                tx.oncomplete = resolve;
+                tx.onerror = () => reject(tx.error);
+            });
+        }
+        function dbLimpar() {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE, 'readwrite');
+                tx.objectStore(STORE).clear();
+                tx.oncomplete = resolve;
+                tx.onerror = () => reject(tx.error);
+            });
+        }
+
+        function renderFotos() {
+            grid.innerHTML = '';
+            fotos.forEach(f => criarItemPreenchido(f));
+            criarItemVazio();
+            criarItemVazio();
+        }
+
+        function novoId() { return 'f' + Date.now() + '-' + (idSeq++); }
+
+        // item já preenchido (clicar substitui a foto)
+        function criarItemPreenchido(foto) {
             const item = document.createElement('div');
-            item.className = 'foto-item';
-            item.dataset.index = contadorFotos++;
+            item.className = 'foto-item repleto';
 
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
-            input.multiple = false;
 
-            const placeholder = document.createElement('div');
-            placeholder.className = 'foto-placeholder';
-            placeholder.innerHTML = '<span class="icone">📷</span><span>Adicionar foto</span>';
+            const img = document.createElement('img');
+            img.src = foto.url;
+            img.alt = 'Foto';
+            img.classList.add('visivel');
+
+            const btn = document.createElement('button');
+            btn.className = 'btn-remover-foto visivel';
+            btn.type = 'button';
+            btn.textContent = '✕';
+
+            item.appendChild(input);
+            item.appendChild(img);
+            item.appendChild(btn);
+
+            input.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) { trocarFoto(foto.id, file); }
+                e.target.value = '';
+            });
+            btn.addEventListener('click', (ev) => { ev.stopPropagation(); removerFoto(foto.id); });
+
+            grid.appendChild(item);
+        }
+
+        // espaço vazio para adicionar foto
+        function criarItemVazio() {
+            const item = document.createElement('div');
+            item.className = 'foto-item';
+
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+
+            const ph = document.createElement('div');
+            ph.className = 'foto-placeholder';
+            ph.innerHTML = '<span class="icone">📷</span><span>Adicionar foto</span>';
 
             const img = document.createElement('img');
             img.alt = 'Foto';
 
-            const btnRemover = document.createElement('button');
-            btnRemover.className = 'btn-remover-foto';
-            btnRemover.textContent = '✕';
-            btnRemover.type = 'button';
+            const btn = document.createElement('button');
+            btn.className = 'btn-remover-foto';
+            btn.type = 'button';
+            btn.textContent = '✕';
 
             item.appendChild(input);
-            item.appendChild(placeholder);
+            item.appendChild(ph);
             item.appendChild(img);
-            item.appendChild(btnRemover);
-            grid.appendChild(item);
+            item.appendChild(btn);
 
-            input.addEventListener('change', function(e) {
+            input.addEventListener('change', (e) => {
                 const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        img.src = event.target.result;
-                        img.classList.add('visivel');
-                        placeholder.style.display = 'none';
-                        btnRemover.classList.add('visivel');
-                        item.classList.add('repleto');
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    limparItem(item);
-                }
+                if (file) { adicionarFoto(file); }
+                e.target.value = '';
             });
 
-            btnRemover.addEventListener('click', function(ev) {
-                ev.stopPropagation();
-                limparItem(item);
-                input.value = '';
-            });
-
-            return item;
+            grid.appendChild(item);
         }
 
-        function limparItem(item) {
-            const img = item.querySelector('img');
-            const placeholder = item.querySelector('.foto-placeholder');
-            const btnRemover = item.querySelector('.btn-remover-foto');
-            const input = item.querySelector('input[type="file"]');
-            img.src = '';
-            img.classList.remove('visivel');
-            placeholder.style.display = 'flex';
-            btnRemover.classList.remove('visivel');
-            item.classList.remove('repleto');
-            input.value = '';
+        async function adicionarFoto(file) {
+            const id = novoId();
+            const url = URL.createObjectURL(file);
+            fotos.push({ id, url });
+            try {
+                await abrirDBSePrecisar();
+                await dbSalvar({ id, blob: file, ord: fotos.length - 1 });
+            } catch (e) { /* segue apenas em memória se falhar */ }
+            renderFotos();
         }
 
-        // Sempre garante que existam 2 espaços para adicionar foto
-        function garantirSlots() {
-            const itens = grid.querySelectorAll('.foto-item');
-            const preenchidos = Array.from(itens).filter(i => i.classList.contains('repleto')).length;
-            let livres = itens.length - preenchidos;
-            while (livres < 2) { criarItemFoto(); livres++; }
+        async function removerFoto(id) {
+            const idx = fotos.findIndex(f => f.id === id);
+            if (idx >= 0) { URL.revokeObjectURL(fotos[idx].url); fotos.splice(idx, 1); }
+            try { await abrirDBSePrecisar(); await dbRemover(id); } catch (e) {}
+            renderFotos();
         }
 
-        criarItemFoto();
-        criarItemFoto();
+        async function trocarFoto(id, file) {
+            const i = fotos.findIndex(f => f.id === id);
+            if (i < 0) return;
+            URL.revokeObjectURL(fotos[i].url);
+            fotos[i] = { id, url: URL.createObjectURL(file) };
+            try { await abrirDBSePrecisar(); await dbSalvar({ id, blob: file, ord: i }); } catch (e) {}
+            renderFotos();
+        }
+
+        // restaura as fotos salvas ao abrir
+        (async function carregarFotosSalvas() {
+            try {
+                await abrirDBSePrecisar();
+                const regs = (await dbTodas()).sort((a, b) => (a.ord || 0) - (b.ord || 0));
+                regs.forEach(r => fotos.push({ id: r.id, url: URL.createObjectURL(r.blob) }));
+            } catch (e) {}
+            renderFotos();
+        })();
 
         // ===== LIMPAR =====
         document.getElementById('btnLimpar').addEventListener('click', () => {
@@ -600,9 +693,10 @@
                     localStorage.removeItem('os_cache_' + id);
                 });
                 inputData.valueAsDate = new Date();
-                grid.innerHTML = '';
-                criarItemFoto();
-                criarItemFoto();
+                fotos.forEach(f => URL.revokeObjectURL(f.url));
+                fotos = [];
+                try { abrirDBSePrecisar().then(() => dbLimpar()); } catch (e) {}
+                renderFotos();
                 mostrarToast('Tudo limpo ✔');
             }
         });
