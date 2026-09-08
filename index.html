@@ -747,6 +747,10 @@
             return el && el.value.trim() ? el.value.trim() : '';
         }
 
+        // ===== IDENTIDADE DA EMPRESA (edite aqui) =====
+        // Quando souber o nome/logo, preencha aqui — aplica no cabeçalho e no rodapé do relatório.
+        const CONFIG_EMPRESA = { nome: '', logo: null };
+
         function esc(s) {
             return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
@@ -778,8 +782,10 @@
             let html = '';
 
             // Cabeçalho
+            const nomeEmpresa = CONFIG_EMPRESA.nome;
+            const kicker = nomeEmpresa ? '<span class="p-kicker">' + esc(nomeEmpresa) + '</span>' : '';
             html += '<div class="p-head">' +
-                '<div><span class="p-kicker">LD Electric</span>' +
+                '<div>' + kicker +
                 '<div class="p-titulo">Ordem de Serviço</div>' +
                 '<div class="p-sub">Relatório de atividade técnica</div></div>' +
                 '<div class="p-os-badge"><span class="b-label">Nº da OS</span>' +
@@ -815,7 +821,7 @@
 
             const dataG = new Date().toLocaleDateString('pt-BR');
             html += '<div class="p-rodape"><span>Gerado em: ' + dataG + '</span>' +
-                '<span>Ordem de Serviço — LD Electric</span></div>';
+                '<span>' + (nomeEmpresa || 'Ordem de Serviço') + '</span></div>';
 
             html += '</div>'; // p-inner
 
