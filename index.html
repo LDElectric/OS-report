@@ -108,6 +108,7 @@
             display: flex;
             flex-direction: column;
             gap: 14px;
+            overflow-x: clip;
         }
 
         .cartao {
@@ -127,13 +128,16 @@
         .cartao .titulo-cartao .ponto { color: var(--amarelo); }
 
         .grade { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .grade > * { min-width: 0; }
         .campo-full { grid-column: 1 / -1; }
 
-        .campo { display: flex; flex-direction: column; gap: 6px; }
+        .campo { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
         .campo label { font-size: 12px; font-weight: 600; color: var(--texto-suave); }
         .campo input,
         .campo textarea {
             width: 100%;
+            min-width: 0;
+            max-width: 100%;
             border: 1.5px solid var(--borda);
             border-radius: 12px;
             padding: 12px 14px;
@@ -143,6 +147,8 @@
             background: #fafbfc;
             transition: border-color .15s, box-shadow .15s, background .15s;
         }
+        /* Campo de data: impede o box de vazar para a direita em telas estreitas */
+        .campo input[type="date"] { width: 100%; min-width: 0; box-sizing: border-box; }
         .campo textarea { resize: vertical; min-height: 110px; }
         .campo input:focus,
         .campo textarea:focus {
