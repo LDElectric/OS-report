@@ -284,61 +284,86 @@
             font-size: 15px; font-weight: 700; cursor: pointer;
         }
 
-        /* ===== IMPRESSÃO: relatório A4 dedicado ===== */
-        #printReport { display: none; }
+        /* ===== RELATÓRIO A4 (usado no PDF gerado e na impressão) ===== */
+        #printReport {
+            position: fixed;
+            left: -200vw;
+            top: 0;
+            width: 794px;
+            background: #fff;
+            color: #000;
+            font-family: Arial, Helvetica, sans-serif;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        #printReport .p-titulo {
+            font-size: 22px; font-weight: bold; text-align: center; letter-spacing: 2px;
+            border-bottom: 3px solid #FFBF00; padding-bottom: 8px; margin-bottom: 12px;
+        }
+        #printReport .p-campos {
+            display: flex; flex-wrap: wrap; gap: 8px 18px;
+            margin-bottom: 10px;
+        }
+        #printReport .p-campo { flex: 1 1 150px; display: flex; flex-direction: column; }
+        #printReport .p-label {
+            font-size: 11px; font-weight: bold; color: #000; background: #FFBF00;
+            padding: 2px 8px; border-radius: 3px; width: fit-content; margin-bottom: 2px;
+        }
+        #printReport .p-valor {
+            border: 1px solid #aaa; border-radius: 3px; padding: 4px 6px; min-height: 24px;
+            font-size: 13px; white-space: pre-wrap; word-break: break-word;
+        }
+        #printReport .p-secao { margin: 8px 0 4px; }
+        #printReport .p-secao-label {
+            font-size: 13px; font-weight: bold; color: #000; background: #FFBF00;
+            padding: 3px 10px; border-radius: 3px; width: fit-content;
+        }
+        #printReport .p-desc {
+            border: 1px solid #aaa; border-radius: 3px; padding: 8px; font-size: 13px;
+            min-height: 80px; white-space: pre-wrap; word-break: break-word; margin-top: 4px;
+        }
+        #printReport .p-fotos {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 8px;
+        }
+        #printReport .p-foto {
+            border: 1px solid #ccc; border-radius: 4px; min-height: 110px; overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #printReport .p-foto img { max-width: 100%; max-height: 170px; object-fit: contain; }
+        #printReport .p-rodape {
+            margin-top: 16px; border-top: 1px solid #aaa; padding-top: 8px;
+            font-size: 11px; color: #666; display: flex; justify-content: space-between;
+        }
+        .p-sem-foto { color: #999; font-size: 11px; }
 
+        /* Estado de captura: exibe só o relatório para gerar o PDF */
+        body.gerando-pdf .appbar,
+        body.gerando-pdf .conteudo,
+        body.gerando-pdf .tabbar,
+        body.gerando-pdf .status-salvo,
+        body.gerando-pdf .toast,
+        body.gerando-pdf .modal-overlay { display: none !important; }
+        body.gerando-pdf #printReport {
+            position: static;
+            left: auto;
+            width: 794px;
+            min-height: 1123px;
+            padding: 57px 68px;
+            margin: 0 auto;
+            background: #fff;
+        }
+
+        /* ===== Impressão nativa (Ctrl+P) ===== */
         @media print {
             body { background: #fff; }
-            .appbar, .conteudo, .tabbar, .status-salvo, .toast { display: none !important; }
+            .appbar, .conteudo, .tabbar, .status-salvo, .toast, .modal-overlay { display: none !important; }
             #printReport {
-                display: block;
-                width: 210mm; min-height: 297mm;
-                background: #fff;
+                position: static;
+                left: auto;
+                width: auto;
+                min-height: 0;
                 padding: 15mm 18mm;
-                color: #000;
-                font-family: Arial, Helvetica, sans-serif;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
             }
-            #printReport .p-titulo {
-                font-size: 22px; font-weight: bold; text-align: center; letter-spacing: 2px;
-                border-bottom: 3px solid #FFBF00; padding-bottom: 8px; margin-bottom: 12px;
-            }
-            #printReport .p-campos {
-                display: flex; flex-wrap: wrap; gap: 8px 18px;
-                margin-bottom: 10px;
-            }
-            #printReport .p-campo { flex: 1 1 150px; display: flex; flex-direction: column; }
-            #printReport .p-label {
-                font-size: 11px; font-weight: bold; color: #000; background: #FFBF00;
-                padding: 2px 8px; border-radius: 3px; width: fit-content; margin-bottom: 2px;
-            }
-            #printReport .p-valor {
-                border: 1px solid #aaa; border-radius: 3px; padding: 4px 6px; min-height: 24px;
-                font-size: 13px; white-space: pre-wrap; word-break: break-word;
-            }
-            #printReport .p-secao { margin: 8px 0 4px; }
-            #printReport .p-secao-label {
-                font-size: 13px; font-weight: bold; color: #000; background: #FFBF00;
-                padding: 3px 10px; border-radius: 3px; width: fit-content;
-            }
-            #printReport .p-desc {
-                border: 1px solid #aaa; border-radius: 3px; padding: 8px; font-size: 13px;
-                min-height: 80px; white-space: pre-wrap; word-break: break-word; margin-top: 4px;
-            }
-            #printReport .p-fotos {
-                display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 8px;
-            }
-            #printReport .p-foto {
-                border: 1px solid #ccc; border-radius: 4px; min-height: 110px; overflow: hidden;
-                display: flex; align-items: center; justify-content: center;
-            }
-            #printReport .p-foto img { max-width: 100%; max-height: 170px; object-fit: contain; }
-            #printReport .p-rodape {
-                margin-top: 16px; border-top: 1px solid #aaa; padding-top: 8px;
-                font-size: 11px; color: #666; display: flex; justify-content: space-between;
-            }
-            .p-sem-foto { color: #999; font-size: 11px; }
         }
 
         /* ===== Responsivo pequeno ===== */
@@ -418,7 +443,7 @@
     <!-- ===== BARRA DE AÇÕES ===== -->
     <footer class="tabbar">
         <button class="btn-limpar" id="btnLimpar">🗑️ Limpar</button>
-        <button class="btn-print" id="btnPrint">🖨️ Imprimir / PDF</button>
+        <button class="btn-print" id="btnPDF">📄 Gerar PDF</button>
     </footer>
 
     <!-- ===== TEMPLATE DE IMPRESSÃO (A4) ===== -->
@@ -439,6 +464,7 @@
         </div>
     </div>
 
+    <script src="lib/html2pdf.bundle.min.js"></script>
     <script>
         // ===== REGISTRO DO SERVICE WORKER (PWA) =====
         if ('serviceWorker' in navigator) {
@@ -752,12 +778,77 @@
             r.innerHTML = html;
         }
 
-        document.getElementById('btnPrint').addEventListener('click', () => {
-            prepararImpressao();
-            window.print();
-        });
+        // ===== GERAR PDF + COMPARTILHAR =====
+        function nomeArquivo() {
+            const os = (valorOuVazio('numOS') || 'OS').replace(/[\\/:*?"<>|]/g, '-');
+            return 'OS-' + os + '.pdf';
+        }
 
-        // Impressão via atalho Ctrl+P preserva o relatório
+        function esperarImagens() {
+            const imgs = document.querySelectorAll('#printReport img');
+            const pendentes = Array.from(imgs).filter(img => !img.complete);
+            return Promise.all(pendentes.map(img => new Promise(res => {
+                img.addEventListener('load', res, { once: true });
+                img.addEventListener('error', res, { once: true });
+            })));
+        }
+
+        async function gerarPDF() {
+            prepararImpressao();
+            const btn = document.getElementById('btnPDF');
+            const textoOriginal = btn.textContent;
+            btn.textContent = '⏳ Gerando...';
+            btn.disabled = true;
+
+            document.body.classList.add('gerando-pdf');
+            try {
+                await esperarImagens();
+
+                const opt = {
+                    margin: 0,
+                    filename: nomeArquivo(),
+                    image: { type: 'jpeg', quality: 0.95 },
+                    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                    pagebreak: { mode: ['css', 'legacy'] }
+                };
+
+                const worker = html2pdf().set(opt).from(document.getElementById('printReport'));
+                const blob = await worker.output('blob');
+                const file = new File([blob], nomeArquivo(), { type: 'application/pdf' });
+
+                // Compartilhar nativo (WhatsApp, e-mail, salvar...) quando o aparelho suporta
+                if (navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: 'Ordem de Serviço',
+                        text: 'Ordem de Serviço ' + (valorOuVazio('numOS') || '')
+                    });
+                } else {
+                    // Fallback em computador: baixa o PDF
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = nomeArquivo();
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    setTimeout(() => URL.revokeObjectURL(url), 4000);
+                    mostrarToast('PDF gerado ✔');
+                }
+            } catch (err) {
+                console.error('Erro ao gerar PDF:', err);
+                mostrarToast('Não foi possível gerar o PDF.');
+            } finally {
+                document.body.classList.remove('gerando-pdf');
+                btn.textContent = textoOriginal;
+                btn.disabled = false;
+            }
+        }
+
+        document.getElementById('btnPDF').addEventListener('click', gerarPDF);
+
+        // Impressão nativa (Ctrl+P) continua montando o relatório
         window.addEventListener('beforeprint', prepararImpressao);
     </script>
 </body>
