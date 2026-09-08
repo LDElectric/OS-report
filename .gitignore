@@ -5,3 +5,6 @@ Desktop.ini
 
 # Cache
 node_modules/
+
+# Screenshots de diagnóstico
+print_*
