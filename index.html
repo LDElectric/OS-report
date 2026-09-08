@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ordem de Serviço - Fotos</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#FFBF00">
+    <link rel="apple-touch-icon" href="icon.png">
+    <style>
+        /* ===== RESET E ESTILOS GERAIS ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #e6e6e6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: Arial, Helvetica, sans-serif;
+            padding: 20px;
+        }
+
+        .a4-page {
+            width: 210mm;
+            min-height: 297mm;
+            background: #ffffff;
+            padding: 15mm 18mm;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* ===== CABEÇALHO ===== */
+        .titulo-os {
+            font-size: 24px;
+            font-weight: bold;
+            color: #000000;
+            text-align: center;
+            letter-spacing: 2px;
+            padding-bottom: 8px;
+            border-bottom: 3px solid #FFBF00;
+            margin-bottom: 8px;
+        }
+
+        /* ===== CAMPOS ===== */
+        .campos-linha {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 20px;
+            margin-bottom: 6px;
+        }
+
+        .campo {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1 1 150px;
+            transition: flex-basis 0.2s ease-out;
+        }
+
+        .campo label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #000000;
+            background-color: #FFBF00;
+            padding: 2px 8px;
+            border-radius: 3px;
+            display: inline-block;
+            width: fit-content;
+        }
+
+        .campo input,
+        .campo textarea {
+            border: 1px solid #aaaaaa;
+            border-radius: 4px;
+            padding: 6px 8px;
+            font-size: 14px;
+            font-family: inherit;
+            color: #000000;
+            background: #ffffff;
+            width: 100%;
+        }
+
+        .campo input:focus,
+        .campo textarea:focus {
+            outline: 2px solid #FFBF00;
+            outline-offset: 1px;
+        }
+
+        /* ===== DESCRIÇÃO ===== */
+        .descricao {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .descricao label {
+            font-size: 14px;
+            font-weight: bold;
+            color: #000000;
+            background-color: #FFBF00;
+            padding: 4px 12px;
+            border-radius: 3px;
+            display: inline-block;
+            width: fit-content;
+        }
+
+        .descricao textarea {
+            border: 1px solid #aaaaaa;
+            border-radius: 4px;
+            padding: 8px 10px;
+            font-size: 14px;
+            font-family: inherit;
+            color: #000000;
+            background: #ffffff;
+            resize: vertical;
+            min-height: 100px;
+            width: 100%;
+        }
+
+        .descricao textarea:focus {
+            outline: 2px solid #FFBF00;
+            outline-offset: 1px;
+        }
+
+        /* ===== SEÇÃO DE FOTOS (DINÂMICA) ===== */
+        .fotos-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 6px;
+            flex: 1;
+        }
+
+        .fotos-header {
+            font-size: 14px;
+            font-weight: bold;
+            color: #000000;
+            background-color: #FFBF00;
+            padding: 4px 12px;
+            border-radius: 3px;
+            display: inline-block;
+            width: fit-content;
+        }
+
+        .fotos-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .foto-item {
+            border: 2px dashed #cccccc;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 150px;
+            background: #f9f9f9;
+            position: relative;
+            transition: border 0.2s;
+        }
+
+        .foto-item:hover {
+            border-color: #aaaaaa;
+        }
+
+        .foto-item input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+
+        .foto-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #888888;
+            font-size: 13px;
+            pointer-events: none;
+            text-align: center;
+            gap: 4px;
+        }
+
+        .foto-placeholder .icone {
+            font-size: 40px;
+            line-height: 1;
+            color: #cccccc;
+        }
+
+        .foto-item img {
+            max-width: 100%;
+            max-height: 180px;
+            object-fit: contain;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .foto-item img.visivel {
+            display: block;
+        }
+
+        .btn-remover-foto {
+            margin-top: 6px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: none;
+            position: relative;
+            z-index: 10;
+        }
+
+        .btn-remover-foto.visivel {
+            display: inline-block;
+        }
+
+        .btn-remover-foto:hover {
+            background: #c0392b;
+        }
+
+        .btn-adicionar-foto {
+            background: #FFBF00;
+            color: #000000;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 20px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+            align-self: flex-start;
+        }
+
+        .btn-adicionar-foto:hover {
+            background: #e6a800;
+        }
+
+        /* ===== RODAPÉ ===== */
+        .rodape {
+            margin-top: auto;
+            border-top: 2px solid #cccccc;
+            padding-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #888888;
+        }
+
+        .rodape span {
+            color: #888888;
+        }
+
+        /* ===== BOTÃO DE IMPRESSÃO & LIMPAR ===== */
+        .botoes-acao {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+            align-self: center;
+        }
+
+        .btn-print {
+            background: #FFBF00;
+            color: #000000;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-print:hover {
+            background: #e6a800;
+        }
+
+        .btn-limpar {
+            background: #cccccc;
+            color: #000000;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn-limpar:hover {
+            background: #aaaaaa;
+        }
+
+        /* ===== AJUSTES PARA IMPRESSÃO ===== */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+                margin: 0;
+            }
+
+            .a4-page {
+                width: 100%;
+                min-height: 100vh;
+                padding: 15mm 18mm;
+                box-shadow: none;
+                border-radius: 0;
+                margin: 0 auto;
+            }
+
+            .botoes-acao,
+            .btn-adicionar-foto,
+            .btn-remover-foto,
+            .foto-item input[type="file"],
+            .foto-placeholder {
+                display: none !important;
+            }
+
+            .foto-item {
+                border: 1px solid #cccccc !important;
+                background: white !important;
+                min-height: 120px;
+                padding: 6px;
+            }
+
+            .foto-item img {
+                max-height: 200px !important;
+            }
+
+            .campo label,
+            .descricao label,
+            .fotos-header,
+            .titulo-os {
+                background-color: #FFBF00 !important;
+                color: #000000 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .rodape {
+                border-top-color: #aaa;
+            }
+
+            .fotos-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 12px !important;
+            }
+        }
+
+        /* ===== RESPONSIVO PARA TELAS MENORES ===== */
+        @media screen and (max-width: 800px) {
+            .a4-page {
+                width: 100%;
+                padding: 12px;
+                min-height: auto;
+            }
+
+            .campos-linha {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .campo {
+                flex-basis: auto !important;
+            }
+
+            .fotos-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .botoes-acao {
+                flex-direction: column;
+                width: 100%;
+            }
+            .botoes-acao button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="a4-page" id="osTemplate">
+        <!-- Título -->
+        <div class="titulo-os">ORDEM DE SERVIÇO</div>
+
+        <!-- Linha de campos -->
+        <div class="campos-linha">
+            <div class="campo">
+                <label for="data">Data</label>
+                <input type="date" id="data">
+            </div>
+            <div class="campo">
+                <label for="numOS">Nº da OS</label>
+                <input type="text" id="numOS" placeholder="Ex: 001/2026">
+            </div>
+            <div class="campo">
+                <label for="numPTS">Nº da PTS</label>
+                <input type="text" id="numPTS" placeholder="Ex: 12345">
+            </div>
+            <div class="campo">
+                <label for="equipamento">Equipamento</label>
+                <input type="text" id="equipamento" placeholder="Ex: Trator X">
+            </div>
+            <div class="campo">
+                <label for="executantes">Executantes</label>
+                <input type="text" id="executantes" placeholder="Nome(s) do(s) executor(es)">
+            </div>
+            <div class="campo">
+                <label for="horimetro">Horímetro</label>
+                <input type="text" id="horimetro" placeholder="Ex: 1234,5 h">
+            </div>
+        </div>
+
+        <!-- Descrição -->
+        <div class="descricao">
+            <label for="descricao">Descrição da Atividade</label>
+            <textarea id="descricao" rows="4" placeholder="Descreva detalhadamente a atividade executada..."></textarea>
+        </div>
+
+        <!-- Seção de Fotos (dinâmica) -->
+        <div class="fotos-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <span class="fotos-header">Fotos (adicione quantas precisar)</span>
+                <button class="btn-adicionar-foto" id="btnAdicionarFoto">+ Adicionar Foto</button>
+            </div>
+            <div class="fotos-grid" id="fotosGrid">
+                <!-- Os itens de foto serão inseridos aqui via JavaScript -->
+            </div>
+        </div>
+
+        <!-- Rodapé -->
+        <div class="rodape">
+            <span>Gerado em: <span id="dataGeracao"></span></span>
+            <span>OS - Template v2.1 (PWA)</span>
+        </div>
+
+        <!-- Botões de ação -->
+        <div class="botoes-acao">
+            <button class="btn-limpar" id="btnLimpar">🗑️ Limpar Tudo</button>
+            <button class="btn-print" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+        </div>
+    </div>
+
+    <script>
+        // ===== REGISTRO DO SERVICE WORKER (PWA) =====
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker registrado com sucesso!'))
+                    .catch(err => console.log('Erro ao registrar Service Worker:', err));
+            });
+        }
+
+        // ===== INICIALIZAÇÃO E AUTO-SAVE =====
+        document.getElementById('dataGeracao').textContent = new Date().toLocaleDateString('pt-BR');
+        
+        // Setar data de hoje por padrão se não houver no cache
+        const inputData = document.getElementById('data');
+        if(!inputData.value) {
+            inputData.valueAsDate = new Date();
+        }
+
+        // Campos para salvar no LocalStorage
+        const camposSave = ['data', 'numOS', 'numPTS', 'equipamento', 'executantes', 'horimetro', 'descricao'];
+        
+        // Carregar dados salvos
+        camposSave.forEach(id => {
+            const el = document.getElementById(id);
+            const saved = localStorage.getItem('os_cache_' + id);
+            if (saved !== null) {
+                el.value = saved;
+            }
+            // Salvar ao digitar
+            el.addEventListener('input', () => {
+                localStorage.setItem('os_cache_' + id, el.value);
+            });
+        });
+
+        // Limpar formulário e apagar cache (com confirmação)
+        document.getElementById('btnLimpar').addEventListener('click', () => {
+            if(confirm('Tem certeza que deseja apagar todos os dados preenchidos?')) {
+                camposSave.forEach(id => {
+                    document.getElementById(id).value = '';
+                    localStorage.removeItem('os_cache_' + id);
+                });
+                inputData.valueAsDate = new Date(); // Reseta data para hoje
+                document.getElementById('fotosGrid').innerHTML = '';
+                criarItemFoto();
+                criarItemFoto();
+            }
+        });
+
+        // ===== LÓGICA DE CAMPOS DINÂMICOS & FALLBACK =====
+        
+        // Alongamento dinâmico do campo Executantes
+        const campoExecutantes = document.getElementById('executantes');
+        const checarTamanho = () => {
+            const tamanhoTexto = campoExecutantes.value.length;
+            if (tamanhoTexto > 18) {
+                campoExecutantes.parentElement.style.flexBasis = (150 + (tamanhoTexto - 18) * 8) + 'px';
+            } else {
+                campoExecutantes.parentElement.style.flexBasis = '150px';
+            }
+        };
+        campoExecutantes.addEventListener('input', checarTamanho);
+        checarTamanho(); // Checar no carregamento também
+
+        // Fallback Horímetro "N/A"
+        const horimetro = document.getElementById('horimetro');
+        const checarHorimetro = () => {
+            if (!horimetro.value.trim()) {
+                horimetro.value = 'N/A';
+                localStorage.setItem('os_cache_horimetro', 'N/A');
+            }
+        };
+
+        horimetro.addEventListener('blur', checarHorimetro);
+        horimetro.addEventListener('focus', () => {
+            if (horimetro.value === 'N/A') {
+                horimetro.value = '';
+            }
+        });
+        window.addEventListener('beforeprint', checarHorimetro);
+
+        // ===== GERENCIADOR DE FOTOS =====
+        const grid = document.getElementById('fotosGrid');
+        let contadorFotos = 0;
+
+        function criarItemFoto() {
+            const item = document.createElement('div');
+            item.className = 'foto-item';
+            item.dataset.index = contadorFotos++;
+
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.multiple = false;
+
+            const placeholder = document.createElement('div');
+            placeholder.className = 'foto-placeholder';
+            placeholder.innerHTML = `
+                <span class="icone">🖼️</span>
+                <span>Clique para adicionar foto</span>
+            `;
+
+            const img = document.createElement('img');
+            img.alt = 'Foto';
+
+            const btnRemover = document.createElement('button');
+            btnRemover.className = 'btn-remover-foto';
+            btnRemover.textContent = '✕ Remover';
+            btnRemover.type = 'button';
+
+            item.appendChild(input);
+            item.appendChild(placeholder);
+            item.appendChild(img);
+            item.appendChild(btnRemover);
+            grid.appendChild(item);
+
+            input.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        img.src = event.target.result;
+                        img.classList.add('visivel');
+                        placeholder.style.display = 'none';
+                        btnRemover.classList.add('visivel');
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    limparItem(item);
+                }
+            });
+
+            btnRemover.addEventListener('click', function() {
+                limparItem(item);
+                input.value = '';
+            });
+
+            placeholder.addEventListener('click', function() {
+                input.click();
+            });
+            img.addEventListener('click', function() {
+                input.click();
+            });
+
+            return item;
+        }
+
+        function limparItem(item) {
+            const img = item.querySelector('img');
+            const placeholder = item.querySelector('.foto-placeholder');
+            const btnRemover = item.querySelector('.btn-remover-foto');
+            const input = item.querySelector('input[type="file"]');
+
+            img.src = '';
+            img.classList.remove('visivel');
+            placeholder.style.display = 'flex';
+            btnRemover.classList.remove('visivel');
+            input.value = '';
+        }
+
+        criarItemFoto();
+        criarItemFoto();
+
+        document.getElementById('btnAdicionarFoto').addEventListener('click', function() {
+            criarItemFoto();
+        });
+    </script>
+</body>
+</html>

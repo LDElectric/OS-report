@@ -1,0 +1,17 @@
+{
+  "name": "OS Thermix",
+  "short_name": "OS Fotos",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#e6e6e6",
+  "theme_color": "#FFBF00",
+  "description": "App PWA para preenchimento de OS e relatórios.",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
