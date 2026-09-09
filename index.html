@@ -308,11 +308,11 @@
             flex: 0 0 auto;
             display: block;
         }
-        /* Borborema (BESA) — logo vertical, mais alto */
+        /* Borborema (BESA) — logo vertical; altura alinhada à Pernambuco p/ cabeçalho consistente */
         #printReport .p-logo--borborema {
-            height: 200px;
+            height: 105px;
             width: auto;
-            max-height: 200px;
+            max-height: 105px;
         }
         /* Pernambuco III — logo horizontal, dimensionado pela altura (mais alto que os textos) */
         #printReport .p-logo--pernambuco3 {
@@ -814,8 +814,8 @@
         // Cada usina tem nome + logo. O usuário seleciona a usina no formulário
         // e o relatório usa o cabeçalho correspondente (logo + nome).
         const PLANTAS = {
-            pernambuco3: { nome: 'UTE Pernambuco III', logo: './logo_pernambuco_iii.svg' },
-            borborema: { nome: 'UTE Borborema Energética S.A.', logo: './besa_logo.svg' }
+            pernambuco3: { nome: 'UTE Pernambuco III', logo: './logo_pernambuco_iii.png' },
+            borborema: { nome: 'UTE Borborema Energética S.A.', logo: './besa_logo.png' }
         };
         // Planta definida no login (persistida no aparelho)
         let plantaSelecionada = localStorage.getItem('os_planta') || '';
