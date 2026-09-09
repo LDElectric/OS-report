@@ -302,9 +302,21 @@
         #printReport .p-head-left { display: flex; align-items: center; gap: 18px; min-width: 0; }
         #printReport .p-id { min-width: 0; }
         #printReport .p-logo {
-            height: 110px; width: auto; max-width: 360px;
             object-fit: contain;
             flex: 0 0 auto;
+            display: block;
+        }
+        /* Borborema (BESA) — logo vertical, mais alto */
+        #printReport .p-logo--borborema {
+            height: 200px;
+            width: auto;
+            max-height: 200px;
+        }
+        /* Pernambuco III — logo horizontal, dimensionado pela altura (mais alto que os textos) */
+        #printReport .p-logo--pernambuco3 {
+            height: 105px;
+            width: auto;
+            max-height: 105px;
         }
         #printReport .p-kicker {
             font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: #1b1b1b; font-weight: 800;
@@ -880,7 +892,7 @@
                 '<div class="p-titulo">Ordem de Serviço</div>' +
                 '<div class="p-sub">Relatório de atividade técnica</div></div>';
             if (planta) {
-                const logo = planta.logo ? '<img class="p-logo" src="' + planta.logo + '" alt="Logo">' : '';
+                const logo = planta.logo ? '<img class="p-logo p-logo--' + esc(plantaSelecionada) + '" src="' + planta.logo + '" alt="Logo">' : '';
                 marca = logo +
                     '<div class="p-id"><span class="p-kicker">' + esc(planta.nome) + '</span>' +
                     '<div class="p-titulo">Ordem de Serviço</div>' +
