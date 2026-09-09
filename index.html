@@ -300,6 +300,7 @@
             padding: 26px 46px 22px;
             display: flex; justify-content: space-between; align-items: center;
             border-bottom: 6px solid #1b1b1b;
+            min-height: 159px;
         }
         #printReport .p-head-left { display: flex; align-items: center; gap: 18px; min-width: 0; }
         #printReport .p-id { min-width: 0; }
@@ -308,17 +309,17 @@
             flex: 0 0 auto;
             display: block;
         }
-        /* Borborema (BESA) — logo vertical; altura alinhada à Pernambuco p/ cabeçalho consistente */
+        /* Borborema (BESA) — logo vertical, mais alto */
         #printReport .p-logo--borborema {
             height: 105px;
             width: auto;
             max-height: 105px;
         }
-        /* Pernambuco III — logo horizontal, dimensionado pela altura (mais alto que os textos) */
+        /* Pernambuco III — logo horizontal; mais contida, cabeçalho padronizado pelo min-height */
         #printReport .p-logo--pernambuco3 {
-            height: 105px;
+            height: 88px;
             width: auto;
-            max-height: 105px;
+            max-height: 88px;
         }
         #printReport .p-kicker {
             font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: #1b1b1b; font-weight: 800;
