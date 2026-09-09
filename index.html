@@ -397,9 +397,42 @@
         @media screen and (max-width: 640px) {
             .grade { grid-template-columns: 1fr; }
         }
+
+        /* ===== TELA DE LOGIN ===== */
+        .login-overlay { position: fixed; inset: 0; z-index: 1000; background: #111; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .login-overlay.oculto { display: none; }
+        .login-card { width: 100%; max-width: 360px; background: #fff; border-radius: 20px; padding: 28px 24px; box-shadow: 0 10px 40px rgba(0,0,0,.4); }
+        .login-card .login-logo { width: 56px; height: 56px; border-radius: 12px; object-fit: cover; margin: 0 auto 8px; display: block; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+        .login-titulo { text-align: center; font-weight: 800; font-size: 20px; }
+        .login-sub { text-align: center; color: #6b7280; font-size: 13px; margin-bottom: 18px; }
+        .login-card label { display: block; font-size: 12px; font-weight: 600; color: #6b7280; margin: 12px 0 6px; }
+        .login-card select, .login-card input[type="password"] { width: 100%; border: 1.5px solid #e4e7ec; border-radius: 12px; padding: 12px 14px; font-size: 16px; font-family: inherit; background: #fafbfc; }
+        .login-card select:focus, .login-card input:focus { outline: none; border-color: #FFBF00; box-shadow: 0 0 0 3px rgba(255,191,0,.25); }
+        .login-erro { color: #e5484d; font-size: 13px; margin-top: 10px; min-height: 16px; }
+        .login-card button { width: 100%; margin-top: 14px; background: #FFBF00; color: #000; border: none; border-radius: 14px; padding: 14px; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 14px rgba(255,191,0,.35); }
+        .login-card button:active { transform: scale(.98); }
     </style>
 </head>
 <body>
+    <!-- ===== TELA DE LOGIN ===== -->
+    <div class="login-overlay" id="loginScreen">
+        <div class="login-card">
+            <img class="login-logo" src="icon.png" alt="Logo">
+            <div class="login-titulo">Ordem de Serviço</div>
+            <div class="login-sub">Acesso restrito</div>
+            <label for="loginPlanta">Planta / Usina</label>
+            <select id="loginPlanta">
+                <option value="">Selecione a planta</option>
+                <option value="pernambuco3">UTE Pernambuco III</option>
+                <option value="borborema">UTE Borborema Energética S.A.</option>
+            </select>
+            <label for="loginSenha">Senha</label>
+            <input type="password" id="loginSenha" autocomplete="off">
+            <div class="login-erro" id="loginErro"></div>
+            <button id="btnEntrar">Entrar</button>
+        </div>
+    </div>
+
     <!-- ===== APPBAR ===== -->
     <header class="appbar">
         <img class="logo" src="icon.png" alt="Logo OS">
@@ -420,12 +453,8 @@
             <div class="titulo-cartao"><span class="ponto">●</span> Dados da OS</div>
             <div class="grade">
                 <div class="campo campo-full">
-                    <label for="planta">Planta / Usina</label>
-                    <select id="planta">
-                        <option value="">Selecione a planta</option>
-                        <option value="pernambuco3">UTE Pernambuco III</option>
-                        <option value="borborema">UTE Borborema Energética S.A.</option>
-                    </select>
+                    <label for="descOS">Descrição da OS</label>
+                    <input type="text" id="descOS">
                 </div>
                 <div class="campo">
                     <label for="data">Data</label>
@@ -556,7 +585,7 @@
 
         // ===== INICIALIZAÇÃO / AUTO-SAVE =====
         const inputData = document.getElementById('data');
-        const camposSave = ['data', 'numOS', 'numPTS', 'equipamento', 'executantes', 'horimetro', 'descricao', 'planta'];
+        const camposSave = ['data', 'numOS', 'numPTS', 'equipamento', 'executantes', 'horimetro', 'descricao', 'descOS'];
         camposSave.forEach(id => {
             const el = document.getElementById(id);
             if (el) {
@@ -773,10 +802,42 @@
             pernambuco3: { nome: 'UTE Pernambuco III', logo: './logo_pernambuco_iii.svg' },
             borborema: { nome: 'UTE Borborema Energética S.A.', logo: './besa_logo.svg' }
         };
+        // Planta definida no login (persistida no aparelho)
+        let plantaSelecionada = localStorage.getItem('os_planta') || '';
         function plantaAtual() {
-            const sel = document.getElementById('planta');
-            const v = sel ? sel.value : '';
-            return PLANTAS[v] || null;
+            return PLANTAS[plantaSelecionada] || null;
+        }
+
+        // ===== LOGIN (senha definida no JS — GitHub Pages não tem auth de servidor) =====
+        const SENHA_APP = 'w32v20';
+        const loginScreen = document.getElementById('loginScreen');
+        const loginErro = document.getElementById('loginErro');
+
+        function entrarNoApp() {
+            loginScreen.classList.add('oculto');
+        }
+
+        document.getElementById('btnEntrar').addEventListener('click', () => {
+            const p = document.getElementById('loginPlanta').value;
+            const senha = document.getElementById('loginSenha').value;
+            if (!p) { loginErro.textContent = 'Selecione a planta.'; return; }
+            if (senha !== SENHA_APP) { loginErro.textContent = 'Senha incorreta.'; return; }
+            plantaSelecionada = p;
+            localStorage.setItem('os_planta', p);
+            sessionStorage.setItem('os_logado', '1');
+            entrarNoApp();
+        });
+        document.getElementById('loginSenha').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') document.getElementById('btnEntrar').click();
+        });
+
+        // Se já autenticado nesta sessão, entra direto; senão exibe o login
+        if (sessionStorage.getItem('os_logado') === '1' && plantaSelecionada) {
+            entrarNoApp();
+        } else {
+            const sel = document.getElementById('loginPlanta');
+            if (sel && plantaSelecionada) sel.value = plantaSelecionada;
+            loginScreen.classList.remove('oculto');
         }
 
         function esc(s) {
@@ -805,6 +866,7 @@
             const eq = valorOuVazio('equipamento');
             const ex = valorOuVazio('executantes');
             const hm = valorOuVazio('horimetro');
+            const descOS = valorOuVazio('descOS');
             const desc = valorOuVazio('descricao');
 
             let html = '';
@@ -832,6 +894,7 @@
 
             // Detalhes
             html += '<div class="p-detalhes">';
+            html += campoHtml('Descrição da OS', descOS, true);
             html += campoHtml('Data', data);
             html += campoHtml('Nº da PTS', pts);
             html += campoHtml('Horímetro', hm);
