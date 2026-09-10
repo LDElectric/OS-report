@@ -488,6 +488,10 @@
                     <label for="horimetro">Horímetro</label>
                     <input type="text" id="horimetro">
                 </div>
+                <div class="campo">
+                    <label for="horas">Horas gastas</label>
+                    <input type="text" id="horas" inputmode="decimal">
+                </div>
                 <div class="campo campo-full">
                     <label for="equipamento">Equipamento</label>
                     <input type="text" id="equipamento">
@@ -601,7 +605,7 @@
 
         // ===== INICIALIZAÇÃO / AUTO-SAVE =====
         const inputData = document.getElementById('data');
-        const camposSave = ['data', 'numOS', 'numPTS', 'equipamento', 'executantes', 'horimetro', 'descricao', 'descOS'];
+        const camposSave = ['data', 'numOS', 'numPTS', 'equipamento', 'executantes', 'horimetro', 'horas', 'descricao', 'descOS'];
         camposSave.forEach(id => {
             const el = document.getElementById(id);
             if (el) {
@@ -882,6 +886,7 @@
             const eq = valorOuVazio('equipamento');
             const ex = valorOuVazio('executantes');
             const hm = valorOuVazio('horimetro');
+            const horas = valorOuVazio('horas');
             const descOS = valorOuVazio('descOS');
             const desc = valorOuVazio('descricao');
 
@@ -914,6 +919,7 @@
             html += campoHtml('Data', data);
             html += campoHtml('Nº da PTS', pts);
             html += campoHtml('Horímetro', hm);
+            html += campoHtml('Horas gastas', horas);
             html += campoHtml('Equipamento', eq, true);
             html += campoHtml('Executantes', ex, true);
             html += '</div>';
