@@ -1,6 +1,6 @@
 {
   "id": "./index.html",
-  "name": "Ordem de Serviço Thermix",
+  "name": "Ordem de Serviço",
   "short_name": "OS Fotos",
   "description": "PWA para preenchimento de Ordens de Serviço e relatórios com fotos.",
   "lang": "pt-BR",

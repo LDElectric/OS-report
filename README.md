@@ -1,4 +1,4 @@
-# OS-report (OS Thermix)
+# OS-report — Ordem de Serviço
 
 Aplicativo **PWA** para preenchimento de Ordens de Serviço (OS) e relatórios com fotos.
 
