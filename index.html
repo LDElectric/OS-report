@@ -169,8 +169,16 @@
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 10px;
+            align-items: start;
         }
+        /* Cada item = miniatura (clicável para escolher a foto) + campo de legenda */
         .foto-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 0;
+        }
+        .foto-thumb {
             position: relative;
             border: 2px dashed #cfd3da;
             border-radius: 14px;
@@ -183,16 +191,42 @@
             cursor: pointer;
             transition: border-color .15s, transform .05s;
         }
-        .foto-item:active { transform: scale(.99); }
-        .foto-item.repleto { border-style: solid; border-color: transparent; }
-        .foto-item input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; z-index: 5; }
+        .foto-thumb:active { transform: scale(.99); }
+        .foto-item.repleto .foto-thumb { border-style: solid; border-color: var(--borda); }
+        .foto-thumb input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; z-index: 5; }
         .foto-placeholder {
             display: flex; flex-direction: column; align-items: center; gap: 6px;
             color: var(--texto-suave); font-size: 12px; text-align: center; padding: 10px; pointer-events: none;
         }
         .foto-placeholder .icone { font-size: 42px; line-height: 1; }
-        .foto-item img { width: 100%; height: 100%; max-height: 220px; object-fit: contain; border-radius: 12px; display: none; }
-        .foto-item img.visivel { display: block; }
+        .foto-thumb img {
+            display: none;
+            max-width: 100%;
+            max-height: 220px;
+            width: auto; height: auto;
+            object-fit: contain;
+            border-radius: 12px;
+        }
+        .foto-thumb img.visivel { display: block; }
+        /* Legenda da foto (vai para o relatório/PDF) */
+        .foto-legenda {
+            width: 100%;
+            border: 1.5px solid var(--borda);
+            border-radius: 10px;
+            padding: 9px 11px;
+            font-size: 13px;
+            font-family: inherit;
+            color: var(--texto);
+            background: #fafbfc;
+            transition: border-color .15s, box-shadow .15s, background .15s;
+        }
+        .foto-legenda::placeholder { color: #a2a8b3; }
+        .foto-legenda:focus {
+            outline: none;
+            border-color: var(--azul);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(74,144,196,.25);
+        }
         .btn-remover-foto {
             position: absolute; top: 8px; right: 8px; z-index: 10;
             background: rgba(0,0,0,.62); color: #fff;
@@ -366,12 +400,25 @@
             white-space: pre-wrap; word-break: break-word; min-height: 70px;
         }
 
-        #printReport .p-fotos { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        /* Grade de fotos: o quadro acompanha exatamente o tamanho da imagem + legenda */
+        #printReport .p-fotos { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 12px; align-items: start; }
         #printReport .p-foto {
-            background: #ffffff; border: 1px solid #d5d5d5; border-radius: 10px; overflow: hidden;
-            min-height: 130px; display: flex; align-items: center; justify-content: center; padding: 6px;
+            display: flex; flex-direction: column; align-items: center;
+            break-inside: avoid; page-break-inside: avoid;
         }
-        #printReport .p-foto img { max-width: 100%; max-height: 200px; object-fit: contain; border-radius: 6px; }
+        #printReport .p-foto img {
+            display: block; margin: 0 auto;
+            max-width: 100%; max-height: 380px;
+            width: auto; height: auto;
+            background: #ffffff; border: 1px solid #d5d5d5; border-radius: 10px;
+            padding: 4px;
+        }
+        #printReport .p-foto-legenda {
+            width: 100%; text-align: center;
+            font-size: 11px; line-height: 1.4; color: #3a3a3a;
+            padding: 6px 2px 0;
+            white-space: pre-wrap; word-break: break-word;
+        }
 
         #printReport .p-rodape {
             margin-top: 22px; padding-top: 12px; border-top: 1px solid #d5d5d5;
@@ -622,7 +669,7 @@
         // ===== GERENCIADOR DE FOTOS (com persistência local) =====
         const grid = document.getElementById('fotosGrid');
         let idSeq = 0;
-        let fotos = [];          // fotos atuais na tela: { id, url }
+        let fotos = [];          // fotos atuais na tela: { id, url, blob, legenda }
         let dbAberto = false;
         let db = null;
 
@@ -694,6 +741,9 @@
             const item = document.createElement('div');
             item.className = 'foto-item repleto';
 
+            const thumb = document.createElement('div');
+            thumb.className = 'foto-thumb';
+
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
@@ -708,9 +758,20 @@
             btn.type = 'button';
             btn.textContent = '✕';
 
-            item.appendChild(input);
-            item.appendChild(img);
-            item.appendChild(btn);
+            thumb.appendChild(input);
+            thumb.appendChild(img);
+            thumb.appendChild(btn);
+
+            // Legenda da foto (aparece no relatório/PDF)
+            const legenda = document.createElement('input');
+            legenda.type = 'text';
+            legenda.className = 'foto-legenda';
+            legenda.maxLength = 140;
+            legenda.placeholder = 'Legenda da foto (opcional)';
+            legenda.value = foto.legenda || '';
+
+            item.appendChild(thumb);
+            item.appendChild(legenda);
 
             input.addEventListener('change', (e) => {
                 const file = e.target.files[0];
@@ -718,6 +779,13 @@
                 e.target.value = '';
             });
             btn.addEventListener('click', (ev) => { ev.stopPropagation(); removerFoto(foto.id); });
+
+            let tLegenda;
+            legenda.addEventListener('input', () => {
+                foto.legenda = legenda.value;
+                clearTimeout(tLegenda);
+                tLegenda = setTimeout(() => salvarLegenda(foto.id), 400);
+            });
 
             grid.appendChild(item);
         }
@@ -727,6 +795,9 @@
             const item = document.createElement('div');
             item.className = 'foto-item';
 
+            const thumb = document.createElement('div');
+            thumb.className = 'foto-thumb';
+
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
@@ -735,18 +806,9 @@
             ph.className = 'foto-placeholder';
             ph.innerHTML = '<span class="icone">📷</span><span>Adicionar foto</span>';
 
-            const img = document.createElement('img');
-            img.alt = 'Foto';
-
-            const btn = document.createElement('button');
-            btn.className = 'btn-remover-foto';
-            btn.type = 'button';
-            btn.textContent = '✕';
-
-            item.appendChild(input);
-            item.appendChild(ph);
-            item.appendChild(img);
-            item.appendChild(btn);
+            thumb.appendChild(input);
+            thumb.appendChild(ph);
+            item.appendChild(thumb);
 
             input.addEventListener('change', (e) => {
                 const file = e.target.files[0];
@@ -760,10 +822,10 @@
         async function adicionarFoto(file) {
             const id = novoId();
             const url = URL.createObjectURL(file);
-            fotos.push({ id, url });
+            fotos.push({ id, url, blob: file, legenda: '' });
             try {
                 await abrirDBSePrecisar();
-                await dbSalvar({ id, blob: file, ord: fotos.length - 1 });
+                await dbSalvar({ id, blob: file, ord: fotos.length - 1, legenda: '' });
             } catch (e) { /* segue apenas em memória se falhar */ }
             renderFotos();
         }
@@ -779,9 +841,22 @@
             const i = fotos.findIndex(f => f.id === id);
             if (i < 0) return;
             URL.revokeObjectURL(fotos[i].url);
-            fotos[i] = { id, url: URL.createObjectURL(file) };
-            try { await abrirDBSePrecisar(); await dbSalvar({ id, blob: file, ord: i }); } catch (e) {}
+            const legenda = fotos[i].legenda || '';
+            fotos[i] = { id, url: URL.createObjectURL(file), blob: file, legenda };
+            try { await abrirDBSePrecisar(); await dbSalvar({ id, blob: file, ord: i, legenda }); } catch (e) {}
             renderFotos();
+        }
+
+        // grava a legenda no aparelho (sem perder a foto)
+        async function salvarLegenda(id) {
+            const i = fotos.findIndex(f => f.id === id);
+            if (i < 0) return;
+            const f = fotos[i];
+            if (!f.blob) return;
+            try {
+                await abrirDBSePrecisar();
+                await dbSalvar({ id: f.id, blob: f.blob, ord: i, legenda: f.legenda || '' });
+            } catch (e) {}
         }
 
         // restaura as fotos salvas ao abrir
@@ -789,7 +864,12 @@
             try {
                 await abrirDBSePrecisar();
                 const regs = (await dbTodas()).sort((a, b) => (a.ord || 0) - (b.ord || 0));
-                regs.forEach(r => fotos.push({ id: r.id, url: URL.createObjectURL(r.blob) }));
+                regs.forEach(r => fotos.push({
+                    id: r.id,
+                    url: URL.createObjectURL(r.blob),
+                    blob: r.blob,
+                    legenda: r.legenda || ''
+                }));
             } catch (e) {}
             renderFotos();
         })();
@@ -930,13 +1010,15 @@
                 html += secaoHtml('Descrição da Atividade', '<div class="p-desc">' + esc(desc) + '</div>');
             }
 
-            // Fotos
-            const fotos = Array.from(grid.querySelectorAll('.foto-item'))
-                .filter(i => i.classList.contains('repleto'))
-                .map(i => i.querySelector('img').src);
+            // Fotos (imagem + legenda, sempre juntas)
             if (fotos.length) {
                 let fot = '<div class="p-fotos">';
-                fotos.forEach(src => { fot += '<div class="p-foto"><img src="' + src + '"></div>'; });
+                fotos.forEach(f => {
+                    const legenda = (f.legenda || '').trim();
+                    fot += '<div class="p-foto"><img src="' + f.url + '" alt="Foto">' +
+                        (legenda ? '<div class="p-foto-legenda">' + esc(legenda) + '</div>' : '') +
+                        '</div>';
+                });
                 fot += '</div>';
                 html += secaoHtml('Fotos da OS', fot);
             }
@@ -957,12 +1039,199 @@
         }
 
         function esperarImagens() {
-            const imgs = document.querySelectorAll('#printReport img');
-            const pendentes = Array.from(imgs).filter(img => !img.complete);
-            return Promise.all(pendentes.map(img => new Promise(res => {
-                img.addEventListener('load', res, { once: true });
+            const imgs = Array.from(document.querySelectorAll('#printReport img'));
+            return Promise.all(imgs.map(img => new Promise(res => {
+                const pronto = () => {
+                    if (img.decode) { img.decode().then(res).catch(res); } else { res(); }
+                };
+                if (img.complete && img.naturalWidth) { pronto(); return; }
+                img.addEventListener('load', pronto, { once: true });
                 img.addEventListener('error', res, { once: true });
             })));
+        }
+
+        // ===== QUEBRA DE PÁGINA INTELIGENTE =====
+        // Lê o relatório já renderizado e descobre ONDE é seguro cortar a página.
+        // Regras: nunca cortar uma foto (ou a dupla foto + legenda), nunca deixar
+        // título de seção órfão no fim da página e nunca cortar uma linha de texto
+        // ao meio. As posições ficam em "px de canvas" (px CSS x escala).
+        function calcularPontosDeQuebra(el, escala) {
+            const base = el.getBoundingClientRect();
+            const yc = (v) => (v - base.top) * escala;
+            const seguras = [];   // posições onde PODE quebrar
+            const atomicas = [];  // intervalos que NÃO podem ser cortados
+
+            const addSegura = (y) => { if (Number.isFinite(y) && y > 1) seguras.push(y); };
+            const addAtomica = (a, b) => {
+                if (Number.isFinite(a) && Number.isFinite(b) && b - a > 1) atomicas.push({ a, b });
+            };
+            const rect = (no) => {
+                const r = no.getBoundingClientRect();
+                return { top: yc(r.top), bottom: yc(r.bottom) };
+            };
+            // fim de cada linha de texto (em px de canvas)
+            const linhasDeTexto = (no) => {
+                const out = [];
+                const walker = document.createTreeWalker(no, NodeFilter.SHOW_TEXT, null);
+                let t;
+                while ((t = walker.nextNode())) {
+                    if (!t.nodeValue || !t.nodeValue.trim()) continue;
+                    const range = document.createRange();
+                    range.selectNodeContents(t);
+                    Array.prototype.forEach.call(range.getClientRects(), (r) => {
+                        if (r.height > 1 && r.width > 1) out.push(yc(r.bottom));
+                    });
+                }
+                return out.sort((a, b) => a - b);
+            };
+
+            // 1) Cabeçalho: bloco indivisível
+            const head = el.querySelector('.p-head');
+            if (head) { const r = rect(head); addAtomica(r.top, r.bottom); addSegura(r.bottom); }
+
+            // 2) Campos de detalhes: mantém cada faixa inteira; se o valor for
+            //    longo, permite quebrar entre as linhas de texto do campo maior
+            const faixas = new Map();
+            el.querySelectorAll('.p-detalhes .p-field').forEach((campo) => {
+                const chave = Math.round(campo.getBoundingClientRect().top);
+                if (!faixas.has(chave)) faixas.set(chave, []);
+                faixas.get(chave).push(campo);
+            });
+            faixas.forEach((campos) => {
+                const tops = campos.map(c => c.getBoundingClientRect().top);
+                const bots = campos.map(c => c.getBoundingClientRect().bottom);
+                const topo = yc(Math.min.apply(null, tops));
+                const fim = yc(Math.max.apply(null, bots));
+                const valores = campos
+                    .map(c => ({ el: c.querySelector('.p-valor') }))
+                    .map(v => ({ el: v.el, r: v.el ? v.el.getBoundingClientRect() : null }))
+                    .filter(v => v.r);
+                if (!valores.length || fim - topo <= 320 * escala) {
+                    addAtomica(topo, fim);
+                } else {
+                    // valores longos: pode quebrar entre as linhas do campo maior,
+                    // desde que abaixo do texto dos campos vizinhos da mesma faixa
+                    const maisAlto = valores.reduce((a, b) => (yc(b.r.bottom) > yc(a.r.bottom) ? b : a));
+                    const outros = valores.filter(v => v !== maisAlto);
+                    const fimOutros = outros.length
+                        ? Math.max.apply(null, outros.map(v => yc(v.r.bottom)))
+                        : topo;
+                    linhasDeTexto(maisAlto.el).forEach(y => { if (y >= fimOutros - 1) addSegura(y); });
+                    addAtomica(topo, Math.min(fim, topo + 46 * escala));  // rótulo nunca órfão
+                }
+                addSegura(fim);
+            });
+
+            // 3) Títulos de seção: nunca sozinhos no fim da página
+            el.querySelectorAll('.p-secao').forEach((secao) => {
+                const rSecao = rect(secao);
+                addSegura(rSecao.top - 10 * escala);
+                const label = secao.querySelector('.p-secao-label');
+                if (!label) return;
+                const rLabel = rect(label);
+                const conteudo = label.nextElementSibling;
+                let fimMantido = rLabel.bottom + 48 * escala;  // ~2 linhas do conteúdo
+                if (conteudo) {
+                    const rConteudo = rect(conteudo);
+                    if (conteudo.classList.contains('p-fotos')) {
+                        // mantém o título junto da primeira faixa de fotos
+                        const filhos = Array.from(conteudo.children);
+                        if (filhos.length) {
+                            const topoFaixa = Math.min.apply(null, filhos.map(f => f.getBoundingClientRect().top));
+                            let fimFaixa = fimMantido;
+                            filhos.forEach(f => {
+                                const rb = f.getBoundingClientRect();
+                                if (rb.top <= topoFaixa + 2) fimFaixa = Math.max(fimFaixa, yc(rb.bottom));
+                            });
+                            fimMantido = fimFaixa;
+                        }
+                    } else {
+                        fimMantido = Math.min(rConteudo.bottom, Math.max(fimMantido, rConteudo.top + 48 * escala));
+                    }
+                }
+                addAtomica(rLabel.top, fimMantido);   // inclui o título + início do conteúdo
+            });
+
+            // 4) Descrição da Atividade (texto pode ser longo): quebra só entre linhas
+            el.querySelectorAll('.p-desc').forEach((d) => {
+                const r = rect(d);
+                linhasDeTexto(d).forEach(addSegura);
+                addSegura(r.top);
+                addSegura(r.bottom);
+            });
+
+            // 5) Fotos: imagem + legenda formam um bloco indivisível
+            el.querySelectorAll('.p-foto').forEach((card) => {
+                const r = rect(card);
+                addAtomica(r.top, r.bottom);
+                addSegura(r.top);
+                addSegura(r.bottom);
+            });
+
+            // 6) Rodapé: bloco indivisível
+            const rodape = el.querySelector('.p-rodape');
+            if (rodape) {
+                const r = rect(rodape);
+                addAtomica(r.top, r.bottom);
+                addSegura(r.top - 8 * escala);
+                addSegura(r.bottom);
+            }
+
+            // ordena e remove posições duplicadas
+            seguras.sort((a, b) => a - b);
+            const unicas = [];
+            seguras.forEach((y) => {
+                if (!unicas.length || y - unicas[unicas.length - 1] > 1) unicas.push(y);
+            });
+            return { seguras: unicas, atomicas };
+        }
+
+        // Escolhe os cortes de página usando apenas posições seguras
+        function calcularCortes(fullH, escala, mapa) {
+            const PAGINA = 1123 * escala;      // altura útil de 1 página A4
+            const MIN_SOBRA = 300 * escala;    // evita última página quase vazia
+            const dentroAtomica = (y) => mapa.atomicas.some(a => y > a.a + 0.5 && y < a.b - 0.5);
+            const cortes = [0];
+            let topo = 0;
+            let voltas = 0;
+
+            while (voltas++ < 400) {
+                if (fullH - topo <= PAGINA + 0.5) break;   // o restante cabe em 1 página
+                let limite = topo + PAGINA;
+                // se a sobra final ficaria órfã, antecipa a quebra
+                if (fullH - limite < MIN_SOBRA) limite = Math.max(topo + 1, fullH - MIN_SOBRA);
+
+                // maior posição segura que ainda caiba na página
+                let corte = null;
+                for (let i = mapa.seguras.length - 1; i >= 0; i--) {
+                    const y = mapa.seguras[i];
+                    if (y > limite) continue;
+                    if (y <= topo + 1) break;
+                    if (dentroAtomica(y)) continue;
+                    corte = y;
+                    break;
+                }
+                if (corte === null) {
+                    // Nenhum ponto ideal: empurra o bloco indivisível inteiro para a
+                    // próxima página (melhor uma página mais curta do que cortar foto).
+                    corte = limite;
+                    let empurrar = null;
+                    mapa.atomicas.forEach((a) => {
+                        const cabeSozinho = (a.b - a.a) <= PAGINA;
+                        const cortariaBloco = corte > a.a + 1 && corte < a.b - 1;
+                        if (cortariaBloco && cabeSozinho && a.a > topo + 1) {
+                            if (empurrar === null || a.a < empurrar) empurrar = a.a;
+                        }
+                    });
+                    if (empurrar !== null) corte = empurrar;
+                }
+                if (!(corte > topo + 1)) corte = Math.min(limite, fullH);
+
+                cortes.push(corte);
+                topo = corte;
+            }
+            if (cortes[cortes.length - 1] !== fullH) cortes.push(fullH);
+            return cortes;
         }
 
         async function gerarPDF() {
@@ -975,6 +1244,8 @@
             document.body.classList.add('gerando-pdf');
             try {
                 await esperarImagens();
+                if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (e) {} }
+                await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
                 const el = document.getElementById('printReport');
                 const canvas = await html2canvas(el, {
@@ -984,29 +1255,44 @@
                     logging: false
                 });
 
-                const jsPDF = window.jspdf.jsPDF;
-                const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: [794, 1123], hotfixes: ['px_scaling'] });
-
+                const escala = canvas.width / (el.offsetWidth || 794);
                 const fullW = canvas.width;
                 const fullH = canvas.height;
-                const PAGE_PX_H = 1123 * 2; // altura de 1 página A4 em px (scale 2)
 
-                let y = 0;
-                let pagina = 0;
-                do {
-                    if (pagina > 0) pdf.addPage([794, 1123], 'portrait');
-                    const ch = Math.min(PAGE_PX_H, fullH - y);
+                // Descobre as quebras inteligentes (fotos, legendas e títulos preservados)
+                const mapa = calcularPontosDeQuebra(el, escala);
+                const cortes = calcularCortes(fullH, escala, mapa);
+
+                // Todas as páginas do PDF são A4 (794 x 1123 px). A quebra
+                // inteligente só define onde cada página termina — nunca cria
+                // uma página extra em branco no fim.
+                const larguraPg = 794;
+                const alturaPg = 1123;
+                const jsPDF = window.jspdf.jsPDF;
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'px',
+                    format: [larguraPg, alturaPg],
+                    hotfixes: ['px_scaling']
+                });
+
+                for (let i = 0; i < cortes.length - 1; i++) {
+                    const inicio = Math.max(0, Math.round(cortes[i]));
+                    if (inicio >= fullH) break;
+                    const fim = Math.min(Math.round(cortes[i + 1]), fullH);
+                    const ch = Math.max(1, fim - inicio);
+
                     const slice = document.createElement('canvas');
                     slice.width = fullW;
                     slice.height = ch;
                     const ctx = slice.getContext('2d');
                     ctx.fillStyle = '#ffffff';
                     ctx.fillRect(0, 0, fullW, ch);
-                    ctx.drawImage(canvas, 0, y, fullW, ch, 0, 0, fullW, ch);
-                    pdf.addImage(slice.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 794, ch / 2, undefined, 'FAST');
-                    y += PAGE_PX_H;
-                    pagina++;
-                } while (y < fullH);
+                    ctx.drawImage(canvas, 0, inicio, fullW, ch, 0, 0, fullW, ch);
+
+                    if (i > 0) pdf.addPage([larguraPg, alturaPg], 'portrait');
+                    pdf.addImage(slice.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, larguraPg, ch / escala, undefined, 'FAST');
+                }
 
                 const blob = pdf.output('blob');
                 const file = new File([blob], nomeArquivo(), { type: 'application/pdf' });
