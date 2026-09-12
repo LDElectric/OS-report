@@ -1,4 +1,4 @@
-const CACHE_NAME = 'os-fotos-v17';
+const CACHE_NAME = 'os-fotos-v18';
 const ASSETS = [
   './',
   './index.html',
