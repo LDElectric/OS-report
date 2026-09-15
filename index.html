@@ -1234,6 +1234,42 @@
             return cortes;
         }
 
+        // Baixa o PDF no aparelho (fallback sempre disponível)
+        function baixarPDF(blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = nomeArquivo();
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 4000);
+            mostrarToast('PDF salvo no dispositivo ✔');
+        }
+
+        // Captura o relatório. Se o relatório for muito alto, o browser pode
+        // estourar o tamanho máximo de canvas (erro intermitente em regenerações).
+        // Então tenta com escala menor antes de desistir — sempre gera algo.
+        async function capturarRelatorio() {
+            const el = document.getElementById('printReport');
+            void el.offsetHeight; // força o layout ser recalculado p/ medidas confiáveis
+            const escalas = [2, 1.5, 1.25, 1];
+            for (const escala of escalas) {
+                try {
+                    const canvas = await html2canvas(el, {
+                        scale: escala,
+                        useCORS: true,
+                        backgroundColor: '#ffffff',
+                        logging: false
+                    });
+                    return canvas;
+                } catch (e) {
+                    console.warn('html2canvas falhou com escala ' + escala + ':', e);
+                }
+            }
+            throw new Error('Não foi possível capturar o relatório (imagens grandes demais?).');
+        }
+
         async function gerarPDF() {
             prepararImpressao();
             const btn = document.getElementById('btnPDF');
@@ -1248,12 +1284,7 @@
                 await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
                 const el = document.getElementById('printReport');
-                const canvas = await html2canvas(el, {
-                    scale: 2,
-                    useCORS: true,
-                    backgroundColor: '#ffffff',
-                    logging: false
-                });
+                const canvas = await capturarRelatorio();
 
                 const escala = canvas.width / (el.offsetWidth || 794);
                 const fullW = canvas.width;
@@ -1273,8 +1304,7 @@
                 if (!window.jspdf || !window.jspdf.jsPDF) {
                     throw new Error('A lib jsPDF não foi carregada. Verifique sua conexão.');
                 }
-                const jsPDF = window.jspdf.jsPDF;
-                const pdf = new jsPDF({
+                const pdf = new window.jspdf.jsPDF({
                     orientation: 'portrait',
                     unit: 'px',
                     format: [larguraPg, alturaPg],
@@ -1302,31 +1332,35 @@
                 const blob = pdf.output('blob');
                 const file = new File([blob], nomeArquivo(), { type: 'application/pdf' });
 
-                // Compartilhar nativo (WhatsApp, e-mail, salvar...) quando o aparelho suporta
+                // Compartilhar nativo (WhatsApp, e-mail, salvar...).
+                // Se o compartilhamento falhar (cancelado/sem suporte), o PDF
+                // é baixado de qualquer forma — resultado sempre consistente.
+                let compartilhou = false;
                 if (navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        files: [file],
-                        title: 'Ordem de Serviço',
-                        text: 'Ordem de Serviço ' + (valorOuVazio('numOS') || '')
-                    });
+                    try {
+                        await navigator.share({
+                            files: [file],
+                            title: 'Ordem de Serviço',
+                            text: 'Ordem de Serviço ' + (valorOuVazio('numOS') || '')
+                        });
+                        compartilhou = true;
+                        mostrarToast('PDF gerado ✔');
+                    } catch (err) {
+                        // AbortError = usuário fechou a folha de compartilhar (não é erro)
+                        if (err && err.name === 'AbortError') {
+                            mostrarToast('PDF gerado ✔');
+                        } else {
+                            console.warn('Compartilhamento indisponível; baixando o PDF.', err);
+                            baixarPDF(blob);
+                        }
+                    }
                 } else {
-                    // Fallback: baixa o PDF direto
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = nomeArquivo();
-                    a.style.display = 'none';
-                    document.body.appendChild(a);
-                    a.click();
-                    setTimeout(() => {
-                        a.remove();
-                        URL.revokeObjectURL(url);
-                    }, 100);
-                    mostrarToast('PDF gerado ✔');
+                    baixarPDF(blob);
                 }
+                void compartilhou;
             } catch (err) {
                 console.error('Erro ao gerar PDF:', err);
-                mostrarToast('Erro ao gerar o PDF: ' + (err.message || 'Erro desconhecido'));
+                mostrarToast('Erro ao gerar o PDF: ' + (err && err.message ? err.message : err));
             } finally {
                 document.body.classList.remove('gerando-pdf');
                 btn.textContent = textoOriginal;
