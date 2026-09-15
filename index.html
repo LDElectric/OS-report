@@ -1268,6 +1268,11 @@
                 // uma página extra em branco no fim.
                 const larguraPg = 794;
                 const alturaPg = 1123;
+
+                // Verifica se a lib jsPDF carregou corretamente
+                if (!window.jspdf || !window.jspdf.jsPDF) {
+                    throw new Error('A lib jsPDF não foi carregada. Verifique sua conexão.');
+                }
                 const jsPDF = window.jspdf.jsPDF;
                 const pdf = new jsPDF({
                     orientation: 'portrait',
@@ -1305,20 +1310,23 @@
                         text: 'Ordem de Serviço ' + (valorOuVazio('numOS') || '')
                     });
                 } else {
-                    // Fallback em computador: baixa o PDF
+                    // Fallback: baixa o PDF direto
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
                     a.download = nomeArquivo();
+                    a.style.display = 'none';
                     document.body.appendChild(a);
                     a.click();
-                    a.remove();
-                    setTimeout(() => URL.revokeObjectURL(url), 4000);
+                    setTimeout(() => {
+                        a.remove();
+                        URL.revokeObjectURL(url);
+                    }, 100);
                     mostrarToast('PDF gerado ✔');
                 }
             } catch (err) {
                 console.error('Erro ao gerar PDF:', err);
-                mostrarToast('Não foi possível gerar o PDF.');
+                mostrarToast('Erro ao gerar o PDF: ' + (err.message || 'Erro desconhecido'));
             } finally {
                 document.body.classList.remove('gerando-pdf');
                 btn.textContent = textoOriginal;
