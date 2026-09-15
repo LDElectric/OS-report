@@ -444,6 +444,18 @@
             background: #fff;
         }
 
+        /* Pré-geração em 2º plano: reposiciona o relatório para captura sem
+           esconder a tela do usuário (fica colado no fim da página). */
+        body.pre-gerando #printReport {
+            position: static;
+            left: auto;
+            width: 794px;
+            min-height: 1123px;
+            padding: 0;
+            margin: 0 auto;
+            background: #fff;
+        }
+
         /* ===== Impressão nativa (Ctrl+P) ===== */
         @media print {
             body { background: #fff; }
@@ -661,6 +673,7 @@
                 if (saved !== null) { el.value = saved; }
                 el.addEventListener('input', () => {
                     localStorage.setItem('os_cache_' + id, el.value);
+                    marcarDadosMudados();
                 });
             }
         });
@@ -785,6 +798,7 @@
                 foto.legenda = legenda.value;
                 clearTimeout(tLegenda);
                 tLegenda = setTimeout(() => salvarLegenda(foto.id), 400);
+                marcarDadosMudados();
             });
 
             grid.appendChild(item);
@@ -828,6 +842,7 @@
                 await dbSalvar({ id, blob: file, ord: fotos.length - 1, legenda: '' });
             } catch (e) { /* segue apenas em memória se falhar */ }
             renderFotos();
+            marcarDadosMudados();
         }
 
         async function removerFoto(id) {
@@ -835,6 +850,7 @@
             if (idx >= 0) { URL.revokeObjectURL(fotos[idx].url); fotos.splice(idx, 1); }
             try { await abrirDBSePrecisar(); await dbRemover(id); } catch (e) {}
             renderFotos();
+            marcarDadosMudados();
         }
 
         async function trocarFoto(id, file) {
@@ -845,6 +861,7 @@
             fotos[i] = { id, url: URL.createObjectURL(file), blob: file, legenda };
             try { await abrirDBSePrecisar(); await dbSalvar({ id, blob: file, ord: i, legenda }); } catch (e) {}
             renderFotos();
+            marcarDadosMudados();
         }
 
         // grava a legenda no aparelho (sem perder a foto)
@@ -872,6 +889,7 @@
                 }));
             } catch (e) {}
             renderFotos();
+            marcarDadosMudados();
         })();
 
         // ===== LIMPAR =====
@@ -887,6 +905,7 @@
                 try { abrirDBSePrecisar().then(() => dbLimpar()); } catch (e) {}
                 renderFotos();
                 mostrarToast('Tudo limpo ✔');
+                marcarDadosMudados();
             }
         });
 
@@ -927,6 +946,7 @@
             localStorage.setItem('os_planta', p);
             sessionStorage.setItem('os_logado', '1');
             entrarNoApp();
+            marcarDadosMudados();
         });
         document.getElementById('loginSenha').addEventListener('keydown', (e) => {
             if (e.key === 'Enter') document.getElementById('btnEntrar').click();
@@ -1234,11 +1254,15 @@
             return cortes;
         }
 
-        // ===== PDF PRONTO: o navegador assume o envio/salvamento =====
-        // O app só monta o arquivo (com o loading na tela). Assim que o PDF
-        // fica pronto, o loading some e o navegador trata nativamente o arquivo:
-        // abre a folha de compartilhar (WhatsApp, e-mail, salvar...) ou baixa,
-        // do mesmo jeito que já lida com qualquer arquivo.
+        // ===== PDF: preparado em 2º plano e compartilhado no instante do toque =====
+        // O iPhone/Safari só abre a folha nativa de compartilhar (WhatsApp,
+        // "Salvar em Arquivos"... ) se o share for chamado no momento do toque.
+        // Por isso o PDF é montado ANTES, em 2º plano (com debounce), e o toque
+        // em "Gerar PDF" apenas entrega o arquivo pronto — o diálogo abre direto.
+        let blobPronto = null;
+        let preGerando = false;
+        let timerPreGerar = null;
+
         function baixarNativamente(blob) {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -1292,21 +1316,17 @@
             throw new Error('Não foi possível capturar o relatório (imagens grandes demais?).');
         }
 
-        async function gerarPDF() {
+        // Monta o PDF completo e devolve o blob. Em 2º plano usa a classe
+        // "pre-gerando" (não esconde a tela); no clique usa "gerando-pdf".
+        async function montarPDF(em2oPlano) {
             prepararImpressao();
-            const btn = document.getElementById('btnPDF');
-            const textoOriginal = btn.textContent;
-            let blob = null;
+            await esperarImagens();
+            if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (e) {} }
+            await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
-            btn.textContent = '⏳ Gerando...';
-            btn.disabled = true;
-            document.body.classList.add('gerando-pdf');
-
+            const cls = em2oPlano ? 'pre-gerando' : 'gerando-pdf';
+            document.body.classList.add(cls);
             try {
-                await esperarImagens();
-                if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (e) {} }
-                await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-
                 const el = document.getElementById('printReport');
                 const canvas = await capturarRelatorio();
 
@@ -1353,29 +1373,62 @@
                     pdf.addImage(slice.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, larguraPg, ch / escala, undefined, 'FAST');
                 }
 
-                blob = pdf.output('blob');
+                return pdf.output('blob');
+            } finally {
+                document.body.classList.remove(cls);
+            }
+        }
+
+        // Toda mudança invalida o PDF preparado e agenda uma nova pré-geração
+        function marcarDadosMudados() {
+            blobPronto = null;
+            clearTimeout(timerPreGerar);
+            timerPreGerar = setTimeout(preGerar, 900);
+        }
+
+        async function preGerar() {
+            if (preGerando) return;
+            preGerando = true;
+            try {
+                blobPronto = await montarPDF(true);
+            } catch (e) {
+                blobPronto = null;
+                console.warn('Pré-geração do PDF falhou (será tentada de novo).', e);
+            } finally {
+                preGerando = false;
+            }
+        }
+
+        // Toque em "Gerar PDF": se o arquivo já está pronto, entrega na hora
+        // (share no mesmo instante → o diálogo nativo abre direto). Se ainda não
+        // está pronto (raro), gera com loading e pede um segundo toque.
+        async function onBtnPDF() {
+            if (blobPronto) {
+                await entregarPDF(blobPronto);
+                return;
+            }
+
+            const btn = document.getElementById('btnPDF');
+            const textoOriginal = btn.textContent;
+            btn.textContent = '⏳ Gerando...';
+            btn.disabled = true;
+            let blob = null;
+            try {
+                blob = await montarPDF(false);
             } catch (err) {
                 console.error('Erro ao gerar PDF:', err);
                 mostrarToast('Erro ao gerar o PDF: ' + (err && err.message ? err.message : err));
             } finally {
-                // Loading some imediatamente assim que o PDF está pronto
-                document.body.classList.remove('gerando-pdf');
                 btn.textContent = textoOriginal;
                 btn.disabled = false;
             }
-
-            // PDF pronto: o navegador assume o envio/salvamento de forma nativa
             if (blob) {
-                try {
-                    await entregarPDF(blob);
-                } catch (err) {
-                    console.error('Erro ao entregar PDF:', err);
-                    baixarNativamente(blob);
-                }
+                blobPronto = blob;
+                mostrarToast('PDF pronto! Toque em "Gerar PDF" novamente para compartilhar.');
             }
         }
 
-        document.getElementById('btnPDF').addEventListener('click', gerarPDF);
+        document.getElementById('btnPDF').addEventListener('click', onBtnPDF);
 
         // Impressão nativa (Ctrl+P) continua montando o relatório
         window.addEventListener('beforeprint', prepararImpressao);
