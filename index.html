@@ -608,7 +608,7 @@
     <div class="modal-overlay" id="modalPDF">
         <div class="modal">
             <h3>📄 PDF pronto</h3>
-            <p class="pdf-info" id="pdfInfo">Escolha um app para enviar ou salvar o arquivo.</p>
+            <p class="pdf-info" id="pdfInfo">O compartilhamento não abriu automaticamente. Escolha como enviar ou salvar o PDF.</p>
             <div class="acoes-pdf">
                 <button class="btn-share" id="btnCompartilharPDF">📤 Compartilhar</button>
                 <button class="btn-save" id="btnSalvarPDF">💾 Salvar arquivo</button>
@@ -1282,8 +1282,8 @@
             const info = document.getElementById('pdfInfo');
             const os = valorOuVazio('numOS');
             info.textContent = os
-                ? 'Ordem de Serviço ' + os + ' pronta! Escolha um app para enviar ou salvar.'
-                : 'PDF pronto! Escolha um app para enviar ou salvar.';
+                ? 'Ordem de Serviço ' + os + ' pronta! O compartilhamento não abriu automaticamente — escolha como enviar ou salvar.'
+                : 'O compartilhamento não abriu automaticamente — escolha como enviar ou salvar o PDF.';
             document.getElementById('modalPDF').classList.add('aberto');
         }
         function fecharModalPDF() {
@@ -1387,12 +1387,11 @@
                             text: 'Ordem de Serviço ' + (valorOuVazio('numOS') || '')
                         });
                         pdfPronto = null; // compartilhado
-                        mostrarToast('PDF gerado ✔');
+                        mostrarToast('PDF enviado ✔');
                     } catch (err) {
-                        // AbortError = usuário fechou a folha (não é erro)
+                        // AbortError = usuário fechou a folha (não é erro, fica em silêncio)
                         if (err && err.name === 'AbortError') {
                             pdfPronto = null;
-                            mostrarToast('PDF gerado ✔');
                         } else {
                             console.warn('Compartilhamento não abriu; mostrando opções no app.', err);
                         }
@@ -1428,12 +1427,11 @@
                     });
                     pdfPronto = null;
                     fecharModalPDF();
-                    mostrarToast('PDF gerado ✔');
+                    mostrarToast('PDF enviado ✔');
                 } catch (err) {
                     if (err && err.name === 'AbortError') {
                         pdfPronto = null;
                         fecharModalPDF();
-                        mostrarToast('PDF gerado ✔');
                     }
                     // outros erros: deixa o modal aberto p/ tentar de novo ou salvar
                 }
