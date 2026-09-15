@@ -322,18 +322,6 @@
             font-size: 15px; font-weight: 700; cursor: pointer;
         }
 
-        /* ===== MODAL DO PDF (compartilhar / salvar) ===== */
-        .pdf-info { font-size: 14px; color: var(--texto); line-height: 1.5; margin-bottom: 16px; text-align: center; }
-        .acoes-pdf { display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px; }
-        .acoes-pdf button {
-            border: none; border-radius: 14px; padding: 14px;
-            font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer;
-            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-        }
-        .acoes-pdf .btn-share { background: var(--azul); color: #fff; box-shadow: 0 6px 14px rgba(74,144,196,.35); }
-        .acoes-pdf .btn-save { background: #eceef1; color: var(--texto); }
-        .acoes-pdf button:active { transform: scale(.98); }
-
         /* ===== RELATÓRIO A4 (usado no PDF gerado e na impressão) ===== */
         #printReport {
             position: fixed; left: -200vw; top: 0; width: 794px;
@@ -601,19 +589,6 @@
             <div class="passo"><span class="num">3</span><p><b>iPhone / iPad (Safari):</b> toque no botão <b>Compartilhar</b> (quadrado com seta) e escolha <i>“Adicionar à Tela de Início”</i>.</p></div>
             <div class="passo"><span class="num">4</span><p>Pronto! O app abre em <b>tela cheia</b>, com ícone próprio, e funciona até <b>offline</b>.</p></div>
             <button class="fechar" id="btnFecharModal">Entendi</button>
-        </div>
-    </div>
-
-    <!-- ===== MODAL: PDF PRONTO (enviar/salvar SEM abrir no navegador) ===== -->
-    <div class="modal-overlay" id="modalPDF">
-        <div class="modal">
-            <h3>📄 PDF pronto</h3>
-            <p class="pdf-info" id="pdfInfo">O compartilhamento não abriu automaticamente. Escolha como enviar ou salvar o PDF.</p>
-            <div class="acoes-pdf">
-                <button class="btn-share" id="btnCompartilharPDF">📤 Compartilhar</button>
-                <button class="btn-save" id="btnSalvarPDF">💾 Salvar arquivo</button>
-            </div>
-            <button class="fechar" id="btnFecharModalPDF">Fechar</button>
         </div>
     </div>
 
@@ -1259,15 +1234,13 @@
             return cortes;
         }
 
-        // ===== PDF PRONTO: compartilhar ou salvar (nunca abrir no navegador) =====
-        // pdfPronto guarda o blob gerado; o modal só aparece quando o
-        // compartilhamento automático falha, para o usuário escolher de novo.
-        let pdfPronto = null;
-
-        // Salva o arquivo em Downloads sem o navegador abrir o PDF na tela.
-        function salvarPDFSilencioso(blob) {
-            const baixo = new Blob([blob], { type: 'application/octet-stream' });
-            const url = URL.createObjectURL(baixo);
+        // ===== PDF PRONTO: o navegador assume o envio/salvamento =====
+        // O app só monta o arquivo (com o loading na tela). Assim que o PDF
+        // fica pronto, o loading some e o navegador trata nativamente o arquivo:
+        // abre a folha de compartilhar (WhatsApp, e-mail, salvar...) ou baixa,
+        // do mesmo jeito que já lida com qualquer arquivo.
+        function baixarNativamente(blob) {
+            const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             a.download = nomeArquivo();
@@ -1275,19 +1248,25 @@
             document.body.appendChild(a);
             a.click();
             setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 4000);
-            mostrarToast('PDF salvo no dispositivo ✔');
         }
 
-        function abrirModalPDF() {
-            const info = document.getElementById('pdfInfo');
-            const os = valorOuVazio('numOS');
-            info.textContent = os
-                ? 'Ordem de Serviço ' + os + ' pronta! O compartilhamento não abriu automaticamente — escolha como enviar ou salvar.'
-                : 'O compartilhamento não abriu automaticamente — escolha como enviar ou salvar o PDF.';
-            document.getElementById('modalPDF').classList.add('aberto');
-        }
-        function fecharModalPDF() {
-            document.getElementById('modalPDF').classList.remove('aberto');
+        async function entregarPDF(blob) {
+            const file = new File([blob], nomeArquivo(), { type: 'application/pdf' });
+            if (navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        files: [file],
+                        title: 'Ordem de Serviço',
+                        text: 'Ordem de Serviço ' + (valorOuVazio('numOS') || '')
+                    });
+                    mostrarToast('PDF enviado ✔');
+                    return;
+                } catch (err) {
+                    if (err && err.name === 'AbortError') return; // cancelou, silêncio
+                    console.warn('Folha nativa não abriu; usando download do navegador.', err);
+                }
+            }
+            baixarNativamente(blob);
         }
 
         // Captura o relatório. Se o relatório for muito alto, o browser pode
@@ -1317,10 +1296,12 @@
             prepararImpressao();
             const btn = document.getElementById('btnPDF');
             const textoOriginal = btn.textContent;
+            let blob = null;
+
             btn.textContent = '⏳ Gerando...';
             btn.disabled = true;
-
             document.body.classList.add('gerando-pdf');
+
             try {
                 await esperarImagens();
                 if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (e) {} }
@@ -1372,87 +1353,27 @@
                     pdf.addImage(slice.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, larguraPg, ch / escala, undefined, 'FAST');
                 }
 
-                const blob = pdf.output('blob');
-                pdfPronto = blob;
-                const file = new File([blob], nomeArquivo(), { type: 'application/pdf' });
-
-                // Compartilhamento nativo (WhatsApp, e-mail, salvar...) direto,
-                // SEM abrir o PDF no navegador. Se o browser não deixar abrir
-                // agora (ou fechar a folha), o modal abre para o usuário escolher.
-                if (navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
-                    try {
-                        await navigator.share({
-                            files: [file],
-                            title: 'Ordem de Serviço',
-                            text: 'Ordem de Serviço ' + (valorOuVazio('numOS') || '')
-                        });
-                        pdfPronto = null; // compartilhado
-                        mostrarToast('PDF enviado ✔');
-                    } catch (err) {
-                        // AbortError = usuário fechou a folha (não é erro, fica em silêncio)
-                        if (err && err.name === 'AbortError') {
-                            pdfPronto = null;
-                        } else {
-                            console.warn('Compartilhamento não abriu; mostrando opções no app.', err);
-                        }
-                    }
-                }
-                if (pdfPronto) {
-                    return; // o modal abre no finally, com gesto novo do usuário
-                }
+                blob = pdf.output('blob');
             } catch (err) {
                 console.error('Erro ao gerar PDF:', err);
                 mostrarToast('Erro ao gerar o PDF: ' + (err && err.message ? err.message : err));
             } finally {
+                // Loading some imediatamente assim que o PDF está pronto
                 document.body.classList.remove('gerando-pdf');
                 btn.textContent = textoOriginal;
                 btn.disabled = false;
-                if (pdfPronto) {
-                    setTimeout(abrirModalPDF, 150);
+            }
+
+            // PDF pronto: o navegador assume o envio/salvamento de forma nativa
+            if (blob) {
+                try {
+                    await entregarPDF(blob);
+                } catch (err) {
+                    console.error('Erro ao entregar PDF:', err);
+                    baixarNativamente(blob);
                 }
             }
         }
-
-        // ===== AÇÕES DO MODAL DO PDF =====
-        document.getElementById('btnCompartilharPDF').addEventListener('click', async () => {
-            const blob = pdfPronto;
-            if (!blob) { fecharModalPDF(); return; }
-            const file = new File([blob], nomeArquivo(), { type: 'application/pdf' });
-            if (navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
-                try {
-                    await navigator.share({
-                        files: [file],
-                        title: 'Ordem de Serviço',
-                        text: 'Ordem de Serviço ' + (valorOuVazio('numOS') || '')
-                    });
-                    pdfPronto = null;
-                    fecharModalPDF();
-                    mostrarToast('PDF enviado ✔');
-                } catch (err) {
-                    if (err && err.name === 'AbortError') {
-                        pdfPronto = null;
-                        fecharModalPDF();
-                    }
-                    // outros erros: deixa o modal aberto p/ tentar de novo ou salvar
-                }
-            } else {
-                // sem suporte a compartilhar arquivos: salva direto, sem abrir
-                salvarPDFSilencioso(blob);
-                pdfPronto = null;
-                fecharModalPDF();
-            }
-        });
-
-        document.getElementById('btnSalvarPDF').addEventListener('click', () => {
-            if (pdfPronto) salvarPDFSilencioso(pdfPronto);
-            pdfPronto = null;
-            fecharModalPDF();
-        });
-
-        document.getElementById('btnFecharModalPDF').addEventListener('click', fecharModalPDF);
-        document.getElementById('modalPDF').addEventListener('click', (e) => {
-            if (e.target === document.getElementById('modalPDF')) fecharModalPDF();
-        });
 
         document.getElementById('btnPDF').addEventListener('click', gerarPDF);
 
