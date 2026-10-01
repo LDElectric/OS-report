@@ -12,8 +12,11 @@ O app está publicado via **GitHub Pages**:
 
 ## ✨ Funcionalidades
 
-- Formulário de Ordem de Serviço (OS)
+- Formulário de **Ordem de Serviço (OS)** — relatório do serviço executado
+- Formulário de **Solicitação de Serviço (SS)** — registro do serviço a ser feito (gera insumo para a OS)
+- Seletor de modo no topo (**Relatar OS / Registrar SS**): cada modo guarda seus próprios campos e fotos
 - Suporte a fotos e relatórios
+- Geração de **PDF** com identidade visual única para OS e SS
 - Funciona **offline** (Service Worker com cache)
 - Instalável como aplicativo nativo (Android / iOS / Desktop)
 

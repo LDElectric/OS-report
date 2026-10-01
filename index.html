@@ -48,10 +48,60 @@
             color: #ffffff;
             padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
             display: flex;
-            align-items: center;
-            gap: 12px;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
             box-shadow: 0 2px 12px rgba(0,0,0,.25);
             border-bottom: 3px solid var(--azul);
+        }
+        /* Linha 1: identidade + ações (comportamento original do cabeçalho) */
+        .appbar-topo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        /* ===== SELETOR DE MODO (linha 2 do appbar): OS x SS ===== */
+        .seletor-modo {
+            width: 100%;
+            max-width: 620px;
+            margin: 0 auto;
+            display: flex;
+            gap: 6px;
+            padding: 5px;
+            background: rgba(255,255,255,.10);
+            border: 1px solid rgba(255,255,255,.18);
+            border-radius: 999px;
+        }
+        .seletor-modo button {
+            flex: 1;
+            min-width: 0;
+            min-height: 44px;
+            border: none;
+            border-radius: 999px;
+            background: transparent;
+            color: #dbe6f0;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            transition: background .15s, color .15s, transform .05s;
+        }
+        .seletor-modo button:active { transform: scale(.98); }
+        .seletor-modo button[aria-pressed="true"] {
+            background: var(--azul);
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(0,0,0,.3);
+        }
+        @media screen and (max-width: 360px) {
+            .seletor-modo button { font-size: 13px; gap: 4px; }
         }
         .appbar .logo {
             width: 40px; height: 40px;
@@ -130,6 +180,21 @@
             margin-bottom: 14px;
         }
         .cartao .titulo-cartao .ponto { color: var(--azul); }
+        /* Selo "opcional" no título do cartão de Peças e Insumos */
+        .selo-opcional {
+            text-transform: none;
+            letter-spacing: .2px;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--texto-suave);
+            background: #eceef1;
+            border-radius: 999px;
+            padding: 3px 8px;
+        }
+
+        /* Grupos de cartões por modo (OS x SS) — só um fica visível */
+        .secao-modo { display: flex; flex-direction: column; gap: 14px; }
+        .secao-modo[hidden] { display: none; }
 
         .grade { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .grade > * { min-width: 0; }
@@ -511,67 +576,120 @@
 
     <!-- ===== APPBAR ===== -->
     <header class="appbar">
-        <img class="logo" src="icon.png" alt="Logo OS">
-        <div class="ident">
-            <span class="nome">Ordem de Serviço</span>
-            <span class="subtitulo">Fotos e Relatórios</span>
+        <div class="appbar-topo">
+            <img class="logo" src="icon.png" alt="Logo OS">
+            <div class="ident">
+                <span class="nome">Ordem de Serviço</span>
+                <span class="subtitulo">Fotos e Relatórios</span>
+            </div>
+            <div class="appbar-acoes">
+                <button class="btn-instalar hidden" id="btnInstalar">📲 Instalar</button>
+                <button class="btn-info" id="btnInfo" aria-label="Como instalar o app">i</button>
+            </div>
         </div>
-        <div class="appbar-acoes">
-            <button class="btn-instalar hidden" id="btnInstalar">📲 Instalar</button>
-            <button class="btn-info" id="btnInfo" aria-label="Como instalar o app">i</button>
+        <!-- Seletor de modo: o app sempre abre em OS; um toque muda para SS -->
+        <div class="seletor-modo" role="group" aria-label="Tipo de registro">
+            <button type="button" id="btnModoOS" aria-pressed="true">🛠️ Relatar OS</button>
+            <button type="button" id="btnModoSS" aria-pressed="false">📋 Registrar SS</button>
         </div>
     </header>
 
     <!-- ===== CONTEÚDO (visual de app) ===== -->
     <main class="conteudo" id="formApp">
 
-        <section class="cartao">
-            <div class="titulo-cartao"><span class="ponto">●</span> Dados da OS</div>
-            <div class="grade">
-                <div class="campo campo-full">
-                    <label for="descOS">Descrição da OS</label>
-                    <input type="text" id="descOS">
+        <!-- ===== MODO 1: RELATAR OS (tela principal) ===== -->
+        <div class="secao-modo" id="secaoOS">
+            <section class="cartao">
+                <div class="titulo-cartao"><span class="ponto">●</span> Dados da OS</div>
+                <div class="grade">
+                    <div class="campo campo-full">
+                        <label for="descOS">Descrição da OS</label>
+                        <input type="text" id="descOS">
+                    </div>
+                    <div class="campo">
+                        <label for="data">Data</label>
+                        <input type="date" id="data">
+                    </div>
+                    <div class="campo">
+                        <label for="numOS">Nº da OS</label>
+                        <input type="text" id="numOS">
+                    </div>
+                    <div class="campo">
+                        <label for="numPTS">Nº da PTS</label>
+                        <input type="text" id="numPTS">
+                    </div>
+                    <div class="campo">
+                        <label for="horimetro">Horímetro</label>
+                        <input type="text" id="horimetro">
+                    </div>
+                    <div class="campo">
+                        <label for="horas">Horas gastas</label>
+                        <input type="text" id="horas" inputmode="decimal">
+                    </div>
+                    <div class="campo campo-full">
+                        <label for="equipamento">Equipamento</label>
+                        <input type="text" id="equipamento">
+                    </div>
+                    <div class="campo campo-full">
+                        <label for="executantes">Executantes</label>
+                        <input type="text" id="executantes">
+                    </div>
                 </div>
+            </section>
+
+            <section class="cartao">
+                <div class="titulo-cartao"><span class="ponto">●</span> Descrição da Atividade</div>
                 <div class="campo">
-                    <label for="data">Data</label>
-                    <input type="date" id="data">
+                    <textarea id="descricao"></textarea>
                 </div>
+            </section>
+        </div>
+
+        <!-- ===== MODO 2: REGISTRAR SS (Solicitação de Serviço) ===== -->
+        <div class="secao-modo" id="secaoSS" hidden>
+            <section class="cartao">
+                <div class="titulo-cartao"><span class="ponto">●</span> Dados da SS</div>
+                <div class="grade">
+                    <div class="campo campo-full">
+                        <label for="ss_descSolicitacao">Descrição da Solicitação de Serviço</label>
+                        <input type="text" id="ss_descSolicitacao" placeholder="Título curto">
+                    </div>
+                    <div class="campo">
+                        <label for="ss_data">Data</label>
+                        <input type="date" id="ss_data">
+                    </div>
+                    <div class="campo">
+                        <label for="ss_relatadoPor">Relatado por</label>
+                        <input type="text" id="ss_relatadoPor">
+                    </div>
+                    <div class="campo">
+                        <label for="ss_horasPrevistas">Horas gastas previstas</label>
+                        <input type="text" id="ss_horasPrevistas" inputmode="decimal">
+                    </div>
+                    <div class="campo">
+                        <label for="ss_equipamento">Equipamento (Local)</label>
+                        <input type="text" id="ss_equipamento">
+                    </div>
+                </div>
+            </section>
+
+            <section class="cartao">
+                <div class="titulo-cartao"><span class="ponto">●</span> Descrição do Problema</div>
                 <div class="campo">
-                    <label for="numOS">Nº da OS</label>
-                    <input type="text" id="numOS">
+                    <textarea id="ss_problema" placeholder="Detalhe o problema encontrado..."></textarea>
                 </div>
+            </section>
+
+            <section class="cartao">
+                <div class="titulo-cartao"><span class="ponto">●</span> Peças e Insumos <span class="selo-opcional">opcional</span></div>
                 <div class="campo">
-                    <label for="numPTS">Nº da PTS</label>
-                    <input type="text" id="numPTS">
+                    <textarea id="ss_pecas" placeholder="Peças e insumos necessários (se houver)..."></textarea>
                 </div>
-                <div class="campo">
-                    <label for="horimetro">Horímetro</label>
-                    <input type="text" id="horimetro">
-                </div>
-                <div class="campo">
-                    <label for="horas">Horas gastas</label>
-                    <input type="text" id="horas" inputmode="decimal">
-                </div>
-                <div class="campo campo-full">
-                    <label for="equipamento">Equipamento</label>
-                    <input type="text" id="equipamento">
-                </div>
-                <div class="campo campo-full">
-                    <label for="executantes">Executantes</label>
-                    <input type="text" id="executantes">
-                </div>
-            </div>
-        </section>
+            </section>
+        </div>
 
         <section class="cartao">
-            <div class="titulo-cartao"><span class="ponto">●</span> Descrição da Atividade</div>
-            <div class="campo">
-                <textarea id="descricao"></textarea>
-            </div>
-        </section>
-
-        <section class="cartao">
-            <div class="titulo-cartao"><span class="ponto">●</span> Fotos da OS</div>
+            <div class="titulo-cartao"><span class="ponto">●</span> <span id="tituloFotos">Fotos da OS</span></div>
             <div class="fotos-grid" id="fotosGrid"></div>
         </section>
 
@@ -663,26 +781,64 @@
         document.getElementById('btnFecharModal').addEventListener('click', fecharModal);
         modalInstalar.addEventListener('click', (e) => { if (e.target === modalInstalar) fecharModal(); });
 
+        // ===== MODO ATUAL (OS x SS) =====
+        // O app sempre abre em OS; o usuário troca para SS pelo seletor do topo.
+        // Cada modo tem seus próprios campos, fotos e rascunho — nunca se misturam.
+        let modoAtual = localStorage.getItem('os_modo') === 'ss' ? 'ss' : 'os';
+
+        function ehSS(id) { return id.indexOf('ss_') === 0; }
+        function ehModoSS() { return modoAtual === 'ss'; }
+        function prefixoCache(id) { return ehSS(id) ? 'ss_cache_' : 'os_cache_'; }
+        function pertenceAoModo(id) { return modoAtual === 'ss' ? ehSS(id) : !ehSS(id); }
+
+        function aplicarModo() {
+            const ehModoSS = modoAtual === 'ss';
+            document.getElementById('secaoOS').hidden = ehModoSS;
+            document.getElementById('secaoSS').hidden = !ehModoSS;
+            document.getElementById('btnModoOS').setAttribute('aria-pressed', String(!ehModoSS));
+            document.getElementById('btnModoSS').setAttribute('aria-pressed', String(ehModoSS));
+            document.getElementById('tituloFotos').textContent = ehModoSS ? 'Fotos da SS' : 'Fotos da OS';
+            renderFotos();
+        }
+
+        function setModo(m) {
+            if (m !== 'ss' && m !== 'os') m = 'os';
+            if (m === modoAtual) return;
+            modoAtual = m;
+            localStorage.setItem('os_modo', m);
+            aplicarModo();
+            marcarDadosMudados();   // invalida o PDF pré-montado do outro modo
+            mostrarToast(m === 'ss' ? 'Modo: Solicitação de Serviço (SS)' : 'Modo: Ordem de Serviço (OS)');
+        }
+
+        document.getElementById('btnModoOS').addEventListener('click', () => setModo('os'));
+        document.getElementById('btnModoSS').addEventListener('click', () => setModo('ss'));
+
         // ===== INICIALIZAÇÃO / AUTO-SAVE =====
         const inputData = document.getElementById('data');
-        const camposSave = ['data', 'numOS', 'numPTS', 'equipamento', 'executantes', 'horimetro', 'horas', 'descricao', 'descOS'];
+        const inputDataSS = document.getElementById('ss_data');
+        const camposSave = ['data', 'numOS', 'numPTS', 'equipamento', 'executantes', 'horimetro', 'horas', 'descricao', 'descOS',
+            'ss_descSolicitacao', 'ss_data', 'ss_relatadoPor', 'ss_horasPrevistas', 'ss_equipamento', 'ss_problema', 'ss_pecas'];
         camposSave.forEach(id => {
             const el = document.getElementById(id);
             if (el) {
-                const saved = localStorage.getItem('os_cache_' + id);
+                const saved = localStorage.getItem(prefixoCache(id) + id);
                 if (saved !== null) { el.value = saved; }
                 el.addEventListener('input', () => {
-                    localStorage.setItem('os_cache_' + id, el.value);
+                    localStorage.setItem(prefixoCache(id) + id, el.value);
                     marcarDadosMudados();
                 });
             }
         });
         if (!inputData.value) { inputData.valueAsDate = new Date(); }
+        if (inputDataSS && !inputDataSS.value) { inputDataSS.valueAsDate = new Date(); }
 
         // ===== GERENCIADOR DE FOTOS (com persistência local) =====
         const grid = document.getElementById('fotosGrid');
         let idSeq = 0;
-        let fotos = [];          // fotos atuais na tela: { id, url, blob, legenda }
+        // Fotos separadas por modo: OS e SS nunca compartilham registros
+        let fotosPorModo = { os: [], ss: [] };
+        function fotosAtuais() { return fotosPorModo[modoAtual]; }
         let dbAberto = false;
         let db = null;
 
@@ -693,12 +849,24 @@
         function abrirDB() {
             return new Promise((resolve, reject) => {
                 if (!('indexedDB' in window)) return reject(new Error('sem indexedDB'));
-                const req = indexedDB.open(DB_NAME, 1);
+                // v1 → v2: ganha o campo "tipo" ('os' | 'ss') para separar as fotos
+                const req = indexedDB.open(DB_NAME, 2);
                 req.onupgradeneeded = (e) => {
                     const d = e.target.result;
                     if (!d.objectStoreNames.contains(STORE)) {
                         d.createObjectStore(STORE, { keyPath: 'id' });
+                        return;
                     }
+                    // Migração: registros antigos (sem tipo) passam a ser da OS
+                    const store = e.target.transaction.objectStore(STORE);
+                    const cursorReq = store.openCursor();
+                    cursorReq.onsuccess = (ev) => {
+                        const cur = ev.target.result;
+                        if (!cur) return;
+                        const valor = cur.value;
+                        if (!valor.tipo) { valor.tipo = 'os'; cur.update(valor); }
+                        cur.continue();
+                    };
                 };
                 req.onsuccess = () => { db = req.result; resolve(db); };
                 req.onerror = () => reject(req.error);
@@ -731,10 +899,17 @@
                 tx.onerror = () => reject(tx.error);
             });
         }
-        function dbLimpar() {
+        function dbLimpar(tipo) {
             return new Promise((resolve, reject) => {
                 const tx = db.transaction(STORE, 'readwrite');
-                tx.objectStore(STORE).clear();
+                const store = tx.objectStore(STORE);
+                const r = store.getAll();
+                r.onsuccess = () => {
+                    // apaga só as fotos do modo atual (o outro modo fica intacto)
+                    (r.result || []).forEach(reg => {
+                        if ((reg.tipo || 'os') === tipo) store.delete(reg.id);
+                    });
+                };
                 tx.oncomplete = resolve;
                 tx.onerror = () => reject(tx.error);
             });
@@ -742,7 +917,7 @@
 
         function renderFotos() {
             grid.innerHTML = '';
-            fotos.forEach(f => criarItemPreenchido(f));
+            fotosAtuais().forEach(f => criarItemPreenchido(f));
             criarItemVazio();
             criarItemVazio();
         }
@@ -836,73 +1011,86 @@
         async function adicionarFoto(file) {
             const id = novoId();
             const url = URL.createObjectURL(file);
-            fotos.push({ id, url, blob: file, legenda: '' });
+            const arr = fotosAtuais();
+            arr.push({ id, url, blob: file, legenda: '', tipo: modoAtual });
             try {
                 await abrirDBSePrecisar();
-                await dbSalvar({ id, blob: file, ord: fotos.length - 1, legenda: '' });
+                await dbSalvar({ id, blob: file, ord: arr.length - 1, legenda: '', tipo: modoAtual });
             } catch (e) { /* segue apenas em memória se falhar */ }
             renderFotos();
             marcarDadosMudados();
         }
 
         async function removerFoto(id) {
-            const idx = fotos.findIndex(f => f.id === id);
-            if (idx >= 0) { URL.revokeObjectURL(fotos[idx].url); fotos.splice(idx, 1); }
+            const arr = fotosAtuais();
+            const idx = arr.findIndex(f => f.id === id);
+            if (idx >= 0) { URL.revokeObjectURL(arr[idx].url); arr.splice(idx, 1); }
             try { await abrirDBSePrecisar(); await dbRemover(id); } catch (e) {}
             renderFotos();
             marcarDadosMudados();
         }
 
         async function trocarFoto(id, file) {
-            const i = fotos.findIndex(f => f.id === id);
+            const arr = fotosAtuais();
+            const i = arr.findIndex(f => f.id === id);
             if (i < 0) return;
-            URL.revokeObjectURL(fotos[i].url);
-            const legenda = fotos[i].legenda || '';
-            fotos[i] = { id, url: URL.createObjectURL(file), blob: file, legenda };
-            try { await abrirDBSePrecisar(); await dbSalvar({ id, blob: file, ord: i, legenda }); } catch (e) {}
+            URL.revokeObjectURL(arr[i].url);
+            const legenda = arr[i].legenda || '';
+            arr[i] = { id, url: URL.createObjectURL(file), blob: file, legenda, tipo: modoAtual };
+            try { await abrirDBSePrecisar(); await dbSalvar({ id, blob: file, ord: i, legenda, tipo: modoAtual }); } catch (e) {}
             renderFotos();
             marcarDadosMudados();
         }
 
         // grava a legenda no aparelho (sem perder a foto)
         async function salvarLegenda(id) {
-            const i = fotos.findIndex(f => f.id === id);
+            const arr = fotosAtuais();
+            const i = arr.findIndex(f => f.id === id);
             if (i < 0) return;
-            const f = fotos[i];
+            const f = arr[i];
             if (!f.blob) return;
             try {
                 await abrirDBSePrecisar();
-                await dbSalvar({ id: f.id, blob: f.blob, ord: i, legenda: f.legenda || '' });
+                await dbSalvar({ id: f.id, blob: f.blob, ord: i, legenda: f.legenda || '', tipo: f.tipo || modoAtual });
             } catch (e) {}
         }
 
-        // restaura as fotos salvas ao abrir
+        // restaura as fotos salvas ao abrir (separadas por modo)
         (async function carregarFotosSalvas() {
             try {
                 await abrirDBSePrecisar();
                 const regs = (await dbTodas()).sort((a, b) => (a.ord || 0) - (b.ord || 0));
-                regs.forEach(r => fotos.push({
-                    id: r.id,
-                    url: URL.createObjectURL(r.blob),
-                    blob: r.blob,
-                    legenda: r.legenda || ''
-                }));
+                regs.forEach(r => {
+                    const modo = r.tipo === 'ss' ? 'ss' : 'os';
+                    fotosPorModo[modo].push({
+                        id: r.id,
+                        url: URL.createObjectURL(r.blob),
+                        blob: r.blob,
+                        legenda: r.legenda || '',
+                        tipo: modo
+                    });
+                });
             } catch (e) {}
             renderFotos();
             marcarDadosMudados();
         })();
 
-        // ===== LIMPAR =====
+        // aplica o modo salvo (o app abre em OS por padrão)
+        aplicarModo();
+
+        // ===== LIMPAR (apenas o modo ativo) =====
         document.getElementById('btnLimpar').addEventListener('click', () => {
-            if (confirm('Tem certeza que deseja apagar todos os dados preenchidos?')) {
-                camposSave.forEach(id => {
+            const rotulo = modoAtual === 'ss' ? 'da SS' : 'da OS';
+            if (confirm('Tem certeza que deseja apagar todos os dados preenchidos ' + rotulo + '?')) {
+                camposSave.filter(pertenceAoModo).forEach(id => {
                     document.getElementById(id).value = '';
-                    localStorage.removeItem('os_cache_' + id);
+                    localStorage.removeItem(prefixoCache(id) + id);
                 });
-                inputData.valueAsDate = new Date();
-                fotos.forEach(f => URL.revokeObjectURL(f.url));
-                fotos = [];
-                try { abrirDBSePrecisar().then(() => dbLimpar()); } catch (e) {}
+                (modoAtual === 'ss' ? inputDataSS : inputData).valueAsDate = new Date();
+                const arr = fotosAtuais();
+                arr.forEach(f => URL.revokeObjectURL(f.url));
+                arr.length = 0;
+                try { abrirDBSePrecisar().then(() => dbLimpar(modoAtual)); } catch (e) {}
                 renderFotos();
                 mostrarToast('Tudo limpo ✔');
                 marcarDadosMudados();
@@ -981,71 +1169,119 @@
 
         function prepararImpressao() {
             const r = document.getElementById('printReport');
-            const data = fmtData(valorOuVazio('data'));
-            const os = valorOuVazio('numOS');
-            const pts = valorOuVazio('numPTS');
-            const eq = valorOuVazio('equipamento');
-            const ex = valorOuVazio('executantes');
-            const hm = valorOuVazio('horimetro');
-            const horas = valorOuVazio('horas');
-            const descOS = valorOuVazio('descOS');
-            const desc = valorOuVazio('descricao');
-
-            let html = '';
+            const ehSS = modoAtual === 'ss';
 
             // Planta selecionada
             const planta = plantaAtual();
 
-            // Cabeçalho: logo à esquerda + nome da planta
+            // Cabeçalho: logo + nome da planta + título do documento.
+            // A OS mantém o badge "Nº da OS"; a SS não tem número → sem badge.
+            const titulo = ehSS ? 'Solicitação de Serviço' : 'Ordem de Serviço';
+            const sub = ehSS ? 'Registro de Solicitação de Serviço' : 'Relatório de atividade técnica';
+
             let marca = '<div class="p-id">' +
-                '<div class="p-titulo">Ordem de Serviço</div>' +
-                '<div class="p-sub">Relatório de atividade técnica</div></div>';
+                '<div class="p-titulo">' + titulo + '</div>' +
+                '<div class="p-sub">' + sub + '</div></div>';
             if (planta) {
                 const logo = planta.logo ? '<img class="p-logo p-logo--' + esc(plantaSelecionada) + '" src="' + planta.logo + '" alt="Logo">' : '';
                 marca = logo +
                     '<div class="p-id"><span class="p-kicker">' + esc(planta.nome) + '</span>' +
-                    '<div class="p-titulo">Ordem de Serviço</div>' +
-                    '<div class="p-sub">Relatório de atividade técnica</div></div>';
+                    '<div class="p-titulo">' + titulo + '</div>' +
+                    '<div class="p-sub">' + sub + '</div></div>';
             }
-            html += '<div class="p-head"><div class="p-head-left">' + marca + '</div>' +
-                '<div class="p-os-badge"><span class="b-label">Nº da OS</span>' +
-                '<span class="b-num">' + (os ? esc(os) : '—') + '</span></div>' +
-                '</div>';
+            let html = '<div class="p-head"><div class="p-head-left">' + marca + '</div>';
+            if (!ehSS) {
+                const os = valorOuVazio('numOS');
+                html += '<div class="p-os-badge"><span class="b-label">Nº da OS</span>' +
+                    '<span class="b-num">' + (os ? esc(os) : '—') + '</span></div>';
+            }
+            html += '</div>';
 
             html += '<div class="p-inner">';
 
-            // Detalhes
-            html += '<div class="p-detalhes">';
-            html += campoHtml('Descrição da OS', descOS, true);
-            html += campoHtml('Data', data);
-            html += campoHtml('Nº da PTS', pts);
-            html += campoHtml('Horímetro', hm);
-            html += campoHtml('Horas gastas', horas);
-            html += campoHtml('Equipamento', eq, true);
-            html += campoHtml('Executantes', ex, true);
-            html += '</div>';
+            if (ehSS) {
+                // ===== REGISTRO DE SOLICITAÇÃO DE SERVIÇO (SS) =====
+                const data = fmtData(valorOuVazio('ss_data'));
+                const descSol = valorOuVazio('ss_descSolicitacao');
+                const eq = valorOuVazio('ss_equipamento');
+                const rel = valorOuVazio('ss_relatadoPor');
+                const horasPrev = valorOuVazio('ss_horasPrevistas');
+                const problema = valorOuVazio('ss_problema');
+                const pecas = valorOuVazio('ss_pecas');
 
-            // Descrição
-            if (desc) {
-                html += secaoHtml('Descrição da Atividade', '<div class="p-desc">' + esc(desc) + '</div>');
-            }
+                html += '<div class="p-detalhes">';
+                html += campoHtml('Descrição da Solicitação de Serviço', descSol, true);
+                html += campoHtml('Data', data);
+                html += campoHtml('Horas gastas previstas', horasPrev);
+                html += campoHtml('Equipamento (Local)', eq, true);
+                html += campoHtml('Relatado por', rel, true);
+                html += '</div>';
 
-            // Fotos (imagem + legenda, sempre juntas)
-            if (fotos.length) {
-                let fot = '<div class="p-fotos">';
-                fotos.forEach(f => {
-                    const legenda = (f.legenda || '').trim();
-                    fot += '<div class="p-foto"><img src="' + f.url + '" alt="Foto">' +
-                        (legenda ? '<div class="p-foto-legenda">' + esc(legenda) + '</div>' : '') +
-                        '</div>';
-                });
-                fot += '</div>';
-                html += secaoHtml('Fotos da OS', fot);
+                if (problema) {
+                    html += secaoHtml('Descrição do Problema', '<div class="p-desc">' + esc(problema) + '</div>');
+                }
+                // Campo opcional: só entra no relatório se estiver preenchido
+                if (pecas) {
+                    html += secaoHtml('Peças e Insumos', '<div class="p-desc">' + esc(pecas) + '</div>');
+                }
+
+                const arrFotos = fotosAtuais();
+                if (arrFotos.length) {
+                    let fot = '<div class="p-fotos">';
+                    arrFotos.forEach(f => {
+                        const legenda = (f.legenda || '').trim();
+                        fot += '<div class="p-foto"><img src="' + f.url + '" alt="Foto">' +
+                            (legenda ? '<div class="p-foto-legenda">' + esc(legenda) + '</div>' : '') +
+                            '</div>';
+                    });
+                    fot += '</div>';
+                    html += secaoHtml('Fotos da SS', fot);
+                }
+            } else {
+                // ===== ORDEM DE SERVIÇO (OS) =====
+                const data = fmtData(valorOuVazio('data'));
+                const pts = valorOuVazio('numPTS');
+                const eq = valorOuVazio('equipamento');
+                const ex = valorOuVazio('executantes');
+                const hm = valorOuVazio('horimetro');
+                const horas = valorOuVazio('horas');
+                const descOS = valorOuVazio('descOS');
+                const desc = valorOuVazio('descricao');
+
+                // Detalhes
+                html += '<div class="p-detalhes">';
+                html += campoHtml('Descrição da OS', descOS, true);
+                html += campoHtml('Data', data);
+                html += campoHtml('Nº da PTS', pts);
+                html += campoHtml('Horímetro', hm);
+                html += campoHtml('Horas gastas', horas);
+                html += campoHtml('Equipamento', eq, true);
+                html += campoHtml('Executantes', ex, true);
+                html += '</div>';
+
+                // Descrição
+                if (desc) {
+                    html += secaoHtml('Descrição da Atividade', '<div class="p-desc">' + esc(desc) + '</div>');
+                }
+
+                // Fotos (imagem + legenda, sempre juntas)
+                const arrFotos = fotosAtuais();
+                if (arrFotos.length) {
+                    let fot = '<div class="p-fotos">';
+                    arrFotos.forEach(f => {
+                        const legenda = (f.legenda || '').trim();
+                        fot += '<div class="p-foto"><img src="' + f.url + '" alt="Foto">' +
+                            (legenda ? '<div class="p-foto-legenda">' + esc(legenda) + '</div>' : '') +
+                            '</div>';
+                    });
+                    fot += '</div>';
+                    html += secaoHtml('Fotos da OS', fot);
+                }
             }
 
             const dataG = new Date().toLocaleDateString('pt-BR');
             html += '<div class="p-rodape"><span>Gerado em: ' + dataG + '</span>' +
-                '<span>' + (planta ? planta.nome : 'Ordem de Serviço') + '</span></div>';
+                '<span>' + esc(planta ? planta.nome : titulo) + '</span></div>';
 
             html += '</div>'; // p-inner
 
@@ -1054,6 +1290,13 @@
 
         // ===== GERAR PDF + COMPARTILHAR =====
         function nomeArquivo() {
+            if (modoAtual === 'ss') {
+                // SS não tem número → usa a data (DD-MM-AAAA) no nome do arquivo
+                const d = valorOuVazio('ss_data') || new Date().toISOString().slice(0, 10);
+                const p = String(d).split('-');
+                const f = p.length === 3 ? p[2] + '-' + p[1] + '-' + p[0] : String(d);
+                return 'SS-' + f.replace(/[\\/:*?"<>|]/g, '-') + '.pdf';
+            }
             const os = (valorOuVazio('numOS') || 'OS').replace(/[\\/:*?"<>|]/g, '-');
             return 'OS-' + os + '.pdf';
         }
@@ -1280,8 +1523,10 @@
                 try {
                     await navigator.share({
                         files: [file],
-                        title: 'Ordem de Serviço',
-                        text: 'Ordem de Serviço ' + (valorOuVazio('numOS') || '')
+                        title: ehModoSS() ? 'Solicitação de Serviço' : 'Ordem de Serviço',
+                        text: ehModoSS()
+                            ? 'Solicitação de Serviço ' + (valorOuVazio('ss_data') ? fmtData(valorOuVazio('ss_data')) : '')
+                            : 'Ordem de Serviço ' + (valorOuVazio('numOS') || '')
                     });
                     mostrarToast('PDF enviado ✔');
                     return;
