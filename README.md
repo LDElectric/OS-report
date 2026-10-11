@@ -16,6 +16,7 @@ O app está publicado via **GitHub Pages**:
 - Formulário de **Solicitação de Serviço (SS)** — registro do serviço a ser feito (gera insumo para a OS)
 - Seletor de modo no topo (**Relatar OS / Registrar SS**): cada modo guarda seus próprios campos e fotos
 - Suporte a fotos e relatórios
+- Compartilhamento nativo do link do app (iOS, Android e cópia direta com feedback)
 - Geração de **PDF** com identidade visual única para OS e SS
 - Funciona **offline** (Service Worker com cache)
 - Instalável como aplicativo nativo (Android / iOS / Desktop)

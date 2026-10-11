@@ -138,7 +138,7 @@
             white-space: nowrap;
         }
         .btn-instalar.hidden { display: none; }
-        .btn-info {
+        .btn-info, .btn-compartilhar {
             width: 32px; height: 32px; flex: 0 0 auto;
             border-radius: 50%;
             border: 2px solid rgba(255,255,255,.55);
@@ -148,9 +148,14 @@
             font-family: Georgia, 'Times New Roman', serif;
             line-height: 1; cursor: pointer;
             display: inline-flex; align-items: center; justify-content: center;
-            transition: background .15s;
+            transition: background .15s, transform .1s;
         }
-        .btn-info:hover { background: rgba(255,255,255,.15); }
+        .btn-info:hover, .btn-compartilhar:hover { background: rgba(255,255,255,.15); }
+        .btn-info:active, .btn-compartilhar:active { transform: scale(.92); }
+        .btn-compartilhar svg {
+            display: block;
+            pointer-events: none;
+        }
 
         /* ===== ÁREA DE CONTEÚDO ===== */
         .conteudo {
@@ -584,7 +589,16 @@
             </div>
             <div class="appbar-acoes">
                 <button class="btn-instalar hidden" id="btnInstalar">📲 Instalar</button>
-                <button class="btn-info" id="btnInfo" aria-label="Como instalar o app">i</button>
+                <button class="btn-compartilhar" id="btnCompartilhar" aria-label="Compartilhar app" title="Compartilhar link do app">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="18" cy="5" r="3"></circle>
+                        <circle cx="6" cy="12" r="3"></circle>
+                        <circle cx="18" cy="19" r="3"></circle>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                    </svg>
+                </button>
+                <button class="btn-info" id="btnInfo" aria-label="Como instalar o app" title="Como instalar o app">i</button>
             </div>
         </div>
         <!-- Seletor de modo: o app sempre abre em OS; um toque muda para SS -->
@@ -780,6 +794,51 @@
         document.getElementById('btnInfo').addEventListener('click', abrirModal);
         document.getElementById('btnFecharModal').addEventListener('click', fecharModal);
         modalInstalar.addEventListener('click', (e) => { if (e.target === modalInstalar) fecharModal(); });
+
+        // ===== COMPARTILHAR LINK DO APP =====
+        async function copiarTexto(texto) {
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(texto);
+                } else {
+                    const aux = document.createElement('input');
+                    aux.value = texto;
+                    document.body.appendChild(aux);
+                    aux.select();
+                    document.execCommand('copy');
+                    aux.remove();
+                }
+                mostrarToast('Link copiado para a área de transferência! 📋');
+            } catch (e) {
+                prompt('Copie o link do app:', texto);
+            }
+        }
+
+        async function compartilharLinkApp() {
+            const url = window.location.href.split('#')[0];
+            const dados = {
+                title: 'Ordem de Serviço',
+                text: 'Acesse o aplicativo de Ordem de Serviço:',
+                url: url
+            };
+
+            if (navigator.share) {
+                try {
+                    await navigator.share(dados);
+                } catch (err) {
+                    if (err && err.name === 'AbortError') return; // Cancelado pelo usuário no menu nativo
+                    console.warn('Falha no compartilhamento nativo, copiando...', err);
+                    await copiarTexto(url);
+                }
+            } else {
+                await copiarTexto(url);
+            }
+        }
+
+        const btnCompartilhar = document.getElementById('btnCompartilhar');
+        if (btnCompartilhar) {
+            btnCompartilhar.addEventListener('click', compartilharLinkApp);
+        }
 
         // ===== MODO ATUAL (OS x SS) =====
         // O app sempre abre em OS; o usuário troca para SS pelo seletor do topo.
